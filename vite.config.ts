@@ -4,9 +4,8 @@ import path from "path";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
-  // Use a relative base for production builds so the site can be served
-  // from GitHub Pages (or any subpath). Keep root for development.
-  base: mode === 'development' ? '/' : './',
+  // Use repository name as base for GitHub Pages deployment
+  base: mode === 'development' ? '/' : '/Echocity1/',
   server: {
     host: "::",
     port: 8082,
