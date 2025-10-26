@@ -9,6 +9,7 @@ import Index from "./pages/Index";
 import Cover from "./pages/Cover";
 import Auth from "./pages/Auth";
 import Admin from "./pages/Admin";
+import Profile from "./pages/Profile";
 import AuthConfirmation from "./pages/AuthConfirmation";
 import MyComplaints from "./pages/MyComplaints";
 import NotFound from "./pages/NotFound";
@@ -28,6 +29,7 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/auth/confirm" element={<AuthConfirmation />} />
             <Route path="/my-complaints" element={<MyComplaints />} />
+            <Route path="/profile" element={<Profile />} />
             
             {/* Admin routes protected by AdminRoute */}
             <Route element={<AdminRoute />}>

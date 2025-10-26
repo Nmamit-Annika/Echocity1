@@ -52,7 +52,6 @@ export const roles = {
     if (error) throw error
     return data
   },
-      async upsert(profile: { id: string; full_name: string } & Partial<Profile>) {
   async assign(userId: string, role: 'admin' | 'citizen') {
     const { data, error } = await supabase
       .from('user_roles')
@@ -72,6 +71,17 @@ export const roles = {
       .eq('role', role)
     
     if (error) throw error
+  }
+}
+
+export const stats = {
+  async complaintsCount(userId: string) {
+    const { count, error } = await supabase
+      .from('complaints')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', userId)
+    if (error) throw error
+    return count ?? 0
   }
 }
 
