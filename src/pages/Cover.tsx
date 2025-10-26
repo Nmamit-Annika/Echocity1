@@ -3,6 +3,8 @@ import { useState } from 'react';
 
 export default function Cover() {
   const [loaded, setLoaded] = useState(false);
+  // Use Vite's base URL so assets work locally and on GitHub Pages
+  const base = import.meta.env.BASE_URL;
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-sky-50 to-indigo-50">
@@ -96,7 +98,7 @@ export default function Cover() {
             <div className="relative w-full max-w-xl">
               <div className="absolute inset-0 bg-gradient-to-r from-primary/30 to-primary/10 rounded-2xl transform rotate-2"></div>
               <img
-                src="/Echocity1/images/hero/hero-bg.svg"
+                src={`${base}images/hero/hero-bg.svg`}
                 alt="City illustration"
                 className={`w-full rounded-2xl border border-slate-200/60 bg-white/50 shadow-xl transition-all duration-700 ${
                   loaded ? 'scale-100 opacity-100 translate-y-0' : 'scale-95 opacity-0 translate-y-4'
