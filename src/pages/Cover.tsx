@@ -96,7 +96,7 @@ export default function Cover() {
             <div className="relative w-full max-w-xl">
               <div className="absolute inset-0 bg-gradient-to-r from-primary/30 to-primary/10 rounded-2xl transform rotate-2"></div>
               <img
-                src="/images/hero/hero-bg.svg"
+                src="/Echocity1/images/hero/hero-bg.svg"
                 alt="City illustration"
                 className={`w-full rounded-2xl border border-slate-200/60 bg-white/50 shadow-xl transition-all duration-700 ${
                   loaded ? 'scale-100 opacity-100 translate-y-0' : 'scale-95 opacity-0 translate-y-4'
