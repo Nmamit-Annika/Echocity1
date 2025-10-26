@@ -141,18 +141,18 @@ const Index = () => {
       <div className="container mx-auto px-4 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Map Section */}
-          <Card className="lg:sticky lg:top-24 h-fit">
+          <Card className="lg:sticky lg:top-24 lg:h-fit order-2 lg:order-1">
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
                 <span>City Map</span>
-                <Button onClick={() => setShowDialog(true)}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  New Complaint
+                <Button onClick={() => setShowDialog(true)} size="sm" className="sm:size-default">
+                  <Plus className="h-4 w-4 sm:mr-2" />
+                  <span className="hidden sm:inline">New Complaint</span>
                 </Button>
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="h-[400px] lg:h-[600px]">
+              <div className="h-[300px] sm:h-[400px] lg:h-[600px] rounded-lg overflow-hidden">
                 <Suspense fallback={<div className="flex items-center justify-center h-full">Loading map…</div>}>
                   <CityMap complaints={complaints} />
                 </Suspense>
@@ -161,7 +161,7 @@ const Index = () => {
           </Card>
 
           {/* Complaints Section */}
-          <div className="space-y-6">
+          <div className="space-y-6 order-1 lg:order-2">
             <Card>
               <CardHeader>
                 <CardTitle>Your Complaints</CardTitle>
