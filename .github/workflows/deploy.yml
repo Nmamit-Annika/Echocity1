@@ -52,6 +52,13 @@ jobs:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
 
+      - name: Verify build output
+        run: |
+          echo "=== Checking dist/index.html exists ==="
+          ls -la dist/
+          echo "=== First 30 lines of dist/index.html ==="
+          head -n 30 dist/index.html
+
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
@@ -62,4 +69,5 @@ jobs:
           path: dist
 
       - name: Deploy to GitHub Pages
+        id: deployment
         uses: actions/deploy-pages@v4
