@@ -30,19 +30,30 @@ const Auth = () => {
     setLoading(true);
 
     try {
+      // Check if we can reach Supabase first
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (error) {
-        toast.error(error.message);
+        console.error('Supabase auth error:', error);
+        if (error.message.includes('fetch')) {
+          toast.error('Network error: Cannot connect to authentication service. Please check your internet connection.');
+        } else {
+          toast.error(error.message);
+        }
       } else {
-  toast.success('Welcome back!');
-  navigate('/app');
+        toast.success('Welcome back!');
+        navigate('/app');
       }
-    } catch (error) {
-      toast.error('An error occurred during sign in');
+    } catch (error: any) {
+      console.error('Auth error:', error);
+      if (error.message?.includes('fetch') || error.name === 'TypeError') {
+        toast.error('Network error: Cannot connect to server. Please check your internet connection and try again.');
+      } else {
+        toast.error('An error occurred during sign in');
+      }
     } finally {
       setLoading(false);
     }
@@ -65,13 +76,23 @@ const Auth = () => {
       });
 
       if (error) {
-        toast.error(error.message);
+        console.error('Supabase signup error:', error);
+        if (error.message.includes('fetch')) {
+          toast.error('Network error: Cannot connect to authentication service. Please check your internet connection.');
+        } else {
+          toast.error(error.message);
+        }
       } else {
-  toast.success('Account created! You can now sign in.');
-  navigate('/app');
+        toast.success('Account created! You can now sign in.');
+        navigate('/app');
       }
-    } catch (error) {
-      toast.error('An error occurred during sign up');
+    } catch (error: any) {
+      console.error('Signup error:', error);
+      if (error.message?.includes('fetch') || error.name === 'TypeError') {
+        toast.error('Network error: Cannot connect to server. Please check your internet connection and try again.');
+      } else {
+        toast.error('An error occurred during sign up');
+      }
     } finally {
       setLoading(false);
     }
