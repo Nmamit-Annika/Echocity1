@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { MapPin, Shield } from 'lucide-react';
+import { getAppUrl, debugUrls } from '@/utils/urlUtils';
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -17,7 +18,10 @@ const Auth = () => {
   const [fullName, setFullName] = useState('');
 
   useEffect(() => {
-    // Redirect if already logged in
+    // Debug URL configuration
+    debugUrls();
+    
+    // Check if user is already signed in
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
         navigate('/app');
@@ -68,7 +72,7 @@ const Auth = () => {
         email,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/app`,
+          emailRedirectTo: getAppUrl(),
           data: {
             full_name: fullName,
           },

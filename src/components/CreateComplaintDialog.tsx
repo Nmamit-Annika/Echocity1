@@ -108,7 +108,13 @@ export function CreateComplaintDialog({ open, onOpenChange, onSuccess }: CreateC
 
           // Try to call analysis endpoint (serverless) to get suggested category using Gemini
           try {
-            const analyzeEndpoint = import.meta.env.VITE_ANALYZE_URL || 'http://localhost:8787/analyze';
+            const envAnalyzeUrl = (import.meta as any).env?.VITE_ANALYZE_URL;
+            const analyzeEndpoint = (envAnalyzeUrl && envAnalyzeUrl.startsWith('http')) 
+              ? envAnalyzeUrl 
+              : 'http://localhost:8787/analyze';
+            
+            console.log('Using analyze endpoint:', analyzeEndpoint);
+            
             const res = await fetch(analyzeEndpoint, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },

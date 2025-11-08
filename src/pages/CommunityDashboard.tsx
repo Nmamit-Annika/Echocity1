@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { MapPin, Users, TrendingUp, Calendar } from 'lucide-react';
 import { ComplaintCard } from '@/components/ComplaintCard';
 import { GeminiChatbot } from '@/components/GeminiChatbot';
+import { debugUrls } from '@/utils/urlUtils';
 
 interface CommunityComplaint {
   id: string;
@@ -48,6 +49,7 @@ export default function CommunityDashboard() {
   const [activeTab, setActiveTab] = useState('map');
 
   useEffect(() => {
+    debugUrls();
     fetchCommunityData();
   }, []);
 
