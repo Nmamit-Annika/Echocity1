@@ -12,6 +12,7 @@ import Admin from "./pages/Admin";
 import Profile from "./pages/Profile";
 import AuthConfirmation from "./pages/AuthConfirmation";
 import MyComplaints from "./pages/MyComplaints";
+import CommunityDashboard from "./pages/CommunityDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -30,6 +31,7 @@ const App = () => (
             <Route path="/auth/confirm" element={<AuthConfirmation />} />
             <Route path="/my-complaints" element={<MyComplaints />} />
             <Route path="/profile" element={<Profile />} />
+            <Route path="/community" element={<CommunityDashboard />} />
             
             {/* Admin routes protected by AdminRoute */}
             <Route element={<AdminRoute />}>

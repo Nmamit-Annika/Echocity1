@@ -27,6 +27,7 @@ interface ComplaintCardProps {
   };
   onStatusUpdate?: (id: string, status: string) => void;
   isAdmin?: boolean;
+  showUserInfo?: boolean;
 }
 
 const statusColors = {
@@ -44,7 +45,7 @@ const priorityColors = {
   critical: 'bg-destructive text-destructive-foreground',
 };
 
-export function ComplaintCard({ complaint, onStatusUpdate, isAdmin }: ComplaintCardProps) {
+export function ComplaintCard({ complaint, onStatusUpdate, isAdmin, showUserInfo }: ComplaintCardProps) {
   return (
     <Card>
       <CardHeader>
@@ -55,6 +56,12 @@ export function ComplaintCard({ complaint, onStatusUpdate, isAdmin }: ComplaintC
               <Calendar className="h-4 w-4" />
               {format(new Date(complaint.created_at), 'PPp')}
             </div>
+            {showUserInfo && (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <User className="h-4 w-4" />
+                <span>By {complaint.profiles?.full_name || 'Anonymous'}</span>
+              </div>
+            )}
           </div>
           <div className="flex gap-2">
             <Badge className={statusColors[complaint.status as keyof typeof statusColors]}>

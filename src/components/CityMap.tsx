@@ -14,9 +14,19 @@ interface CityMapProps {
     longitude: number;
     title: string;
     status: string;
+    description?: string;
+    address?: string;
+    categories?: {
+      name: string;
+      icon: string;
+    };
+    profiles?: {
+      full_name: string;
+    };
   }>;
   onLocationSelect?: (lat: number, lng: number, address: string) => void;
   center?: [number, number]; // [lng, lat] for compatibility with previous prop
+  showAllComplaints?: boolean;
 }
 
 // Fix default icon paths when bundling

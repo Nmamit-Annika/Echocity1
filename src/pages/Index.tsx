@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 const CityMap = lazy(() => import('@/components/CityMap').then((m) => ({ default: m.CityMap })));
 import { ComplaintCard } from '@/components/ComplaintCard';
 import { CreateComplaintDialog } from '@/components/CreateComplaintDialog';
-import { MapPin, LogOut, Plus, Shield, AlertCircle, User } from 'lucide-react';
+import { MapPin, LogOut, Plus, Shield, AlertCircle, User, Users } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface Complaint {
@@ -126,6 +126,10 @@ const Index = () => {
               <Button variant="ghost" onClick={() => navigate('/profile')}>
                 <User className="h-4 w-4 mr-2" />
                 Profile
+              </Button>
+              <Button variant="ghost" onClick={() => navigate('/community')}>
+                <Users className="h-4 w-4 mr-2" />
+                Community
               </Button>
               {isAdmin && (
                 <Button variant="outline" onClick={() => navigate('/admin')}>
