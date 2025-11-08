@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { MapPin, Users, TrendingUp, Calendar } from 'lucide-react';
@@ -43,6 +44,7 @@ export default function CommunityDashboard() {
   const [complaints, setComplaints] = useState<CommunityComplaint[]>([]);
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('map');
 
   useEffect(() => {
@@ -51,6 +53,21 @@ export default function CommunityDashboard() {
 
   const fetchCommunityData = async () => {
     try {
+      console.log('Fetching community data...');
+      
+      // Test Supabase connection first
+      const { error: testError } = await supabase
+        .from('complaints')
+        .select('count')
+        .limit(1);
+        
+      if (testError) {
+        console.error('Supabase connection test failed:', testError);
+        throw new Error(`Database connection failed: ${testError.message}`);
+      }
+      
+      console.log('Supabase connection successful, fetching full data...');
+      
       // Fetch all public complaints
       const { data: complaintsData, error } = await supabase
         .from('complaints')
@@ -63,8 +80,13 @@ export default function CommunityDashboard() {
         .order('created_at', { ascending: false })
         .limit(100);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching complaints:', error);
+        throw new Error(`Failed to fetch complaints: ${error.message}`);
+      }
 
+      console.log('Fetched complaints data:', complaintsData?.length || 0, 'items');
+      
       const complaintsList = (complaintsData || []) as CommunityComplaint[];
       setComplaints(complaintsList);
 
@@ -103,8 +125,32 @@ export default function CommunityDashboard() {
         topCategory
       });
 
-    } catch (error) {
+      console.log('Community data loaded successfully');
+
+    } catch (error: any) {
       console.error('Error fetching community data:', error);
+      
+      // Show user-friendly error message
+      const errorMessage = error?.message || 'Unknown error occurred';
+      setError(`Network Error: ${errorMessage}`);
+      
+      // Create a toast or alert for user feedback
+      setStats({
+        total: 0,
+        today: 0,
+        thisWeek: 0,
+        resolved: 0,
+        pending: 0,
+        topCategory: 'Error loading data'
+      });
+      
+      // You could also add a toast notification here
+      console.error('Network Error Details:', {
+        message: errorMessage,
+        stack: error?.stack,
+        originalError: error
+      });
+      
     } finally {
       setLoading(false);
     }
@@ -117,6 +163,40 @@ export default function CommunityDashboard() {
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
           <p className="text-muted-foreground">Loading community data...</p>
         </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Card className="max-w-md">
+          <CardContent className="pt-6">
+            <div className="text-center">
+              <div className="text-red-500 text-4xl mb-4">⚠️</div>
+              <h3 className="text-lg font-semibold mb-2">Connection Error</h3>
+              <p className="text-muted-foreground mb-4">{error}</p>
+              <div className="space-y-2 text-sm text-left">
+                <p><strong>Possible causes:</strong></p>
+                <ul className="list-disc pl-6 space-y-1">
+                  <li>Check your internet connection</li>
+                  <li>Supabase service might be temporarily unavailable</li>
+                  <li>Environment variables might be missing</li>
+                </ul>
+              </div>
+              <Button 
+                onClick={() => {
+                  setError(null);
+                  setLoading(true);
+                  fetchCommunityData();
+                }}
+                className="mt-4"
+              >
+                Try Again
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
