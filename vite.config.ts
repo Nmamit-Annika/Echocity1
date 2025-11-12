@@ -4,7 +4,7 @@ import path from "path";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
-  base: '/Echocity1/',
+  base: mode === 'production' ? '/Echocity1/' : '/',
   build: {
     outDir: 'dist',
     assetsDir: 'assets',
