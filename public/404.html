@@ -2,20 +2,27 @@
 <html>
   <head>
     <meta charset="UTF-8">
-    <title>Page Not Found</title>
+    <title>EchoCity - Redirecting...</title>
     <script>
-      // Redirect all 404s to the main app
-      const segments = window.location.pathname.split('/');
-      const baseIndex = segments.indexOf('Echocity1');
-      if (baseIndex !== -1) {
-        window.location.href = '/' + segments.slice(0, baseIndex + 1).join('/');
-      } else {
-        window.location.href = '/Echocity1/';
-      }
+      // Single Page App GitHub Pages fix
+      // This redirects 404s to the main app with the route preserved
+      var pathSegmentsToKeep = 1;
+      var l = window.location;
+      
+      // For GitHub Pages: /Echocity1/app -> redirect to /Echocity1/?/app
+      l.replace(
+        l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') +
+        l.pathname.split('/').slice(0, 1 + pathSegmentsToKeep).join('/') + '/?/' +
+        l.pathname.slice(1).split('/').slice(pathSegmentsToKeep).join('/').replace(/&/g, '~and~') +
+        (l.search ? '&' + l.search.slice(1).replace(/&/g, '~and~') : '') +
+        l.hash
+      );
     </script>
   </head>
   <body>
-    <p>Redirecting to home page...</p>
-    <p>If you are not redirected automatically, <a href="/Echocity1/">click here</a>.</p>
+    <div style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+      <h2>🔄 Redirecting to EchoCity...</h2>
+      <p>If you are not redirected automatically, <a href="/Echocity1/">click here</a>.</p>
+    </div>
   </body>
 </html>
