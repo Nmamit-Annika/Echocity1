@@ -2,17 +2,21 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './database.types';
 
-// Hardcoded values for troubleshooting GitHub Pages deployment
-const SUPABASE_URL = 'https://jgjbdtzzuroglzzfluwz.supabase.co';
-const SUPABASE_PUBLISHABLE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpnamJkdHp6dXJvZ2x6emZsdXd6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE0MjE5MTMsImV4cCI6MjA3Njk5NzkxM30.la8TvZWZs4xorSdmywNXolBIWNGEvTGKImCXvc0MEVw';
+const SUPABASE_URL = (import.meta as any).env.VITE_SUPABASE_URL;
+const SUPABASE_PUBLISHABLE_KEY = (import.meta as any).env.VITE_SUPABASE_PUBLISHABLE_KEY || (import.meta as any).env.VITE_SUPABASE_ANON_KEY;
 
 console.log('Supabase Configuration:', {
   url: SUPABASE_URL,
   keyPrefix: SUPABASE_PUBLISHABLE_KEY?.substring(0, 20) + '...',
-  environment: 'hardcoded-for-debugging'
+  environment: (import.meta as any).env.MODE
 });
 
 if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
+  console.error('Missing Supabase environment variables:', {
+    hasUrl: !!SUPABASE_URL,
+    hasKey: !!SUPABASE_PUBLISHABLE_KEY,
+    allEnvVars: (import.meta as any).env
+  });
   throw new Error('Missing Supabase environment variables');
 }
 
