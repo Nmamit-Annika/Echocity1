@@ -1,5 +1,5 @@
-// Gemini AI Service for Community Insights
-// This service will integrate with Google's Gemini API for real civic data analysis
+// Gemini AI Service for Community Insights and Chatbot
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 interface GeminiConfig {
   apiKey?: string;
@@ -23,12 +23,48 @@ interface GeminiResponse {
 
 class GeminiService {
   private config: GeminiConfig = {
-    model: 'gemini-pro',
+    model: 'gemini-1.5-flash',
     temperature: 0.7
   };
+  private genAI?: GoogleGenerativeAI;
 
   constructor(apiKey?: string) {
     this.config.apiKey = apiKey || (import.meta as any).env?.VITE_GEMINI_API_KEY;
+    if (this.config.apiKey) {
+      this.genAI = new GoogleGenerativeAI(this.config.apiKey);
+    }
+  }
+
+  async getChatResponse(message: string, context?: any): Promise<string> {
+    if (!this.genAI) {
+      return "I'm sorry, the AI service is not configured. Please set up your Gemini API key to enable chat functionality.";
+    }
+
+    try {
+      const model = this.genAI.getGenerativeModel({ model: this.config.model });
+      
+      const systemPrompt = `You are Echo, a helpful civic assistant for Indian cities. You help citizens with:
+      - Filing complaints and reporting civic issues
+      - Providing authority contact information
+      - Finding pincodes and area information
+      - Answering questions about civic processes
+      - Providing guidance on municipal services
+      
+      Context: ${JSON.stringify(context)}
+      
+      Keep responses helpful, concise, and focused on civic assistance. If users need to file a complaint, encourage them to use the complaint form.`;
+      
+      const result = await model.generateContent([
+        systemPrompt,
+        `User message: ${message}`
+      ]);
+      
+      const response = await result.response;
+      return response.text();
+    } catch (error) {
+      console.error('Gemini API error:', error);
+      return "I'm sorry, I'm having trouble right now. Please try again in a moment.";
+    }
   }
 
   async analyzeComplaints(complaints: any[]): Promise<GeminiResponse> {
