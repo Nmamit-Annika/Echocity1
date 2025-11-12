@@ -21,6 +21,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
 
   useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+    
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
@@ -35,31 +37,64 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } else {
           setIsAdmin(false);
         }
+        
+        // Clear timeout since we got a response
+        if (timeoutId) clearTimeout(timeoutId);
+        setLoading(false);
       }
     );
 
-    // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        checkAdminStatus(session.user.id);
-      }
+    // Add timeout for initial session check
+    timeoutId = setTimeout(() => {
+      console.warn('Auth session check timed out, proceeding without auth');
       setLoading(false);
-    });
+    }, 3000); // 3 second timeout
 
-    return () => subscription.unsubscribe();
+    // Check for existing session with error handling
+    supabase.auth.getSession()
+      .then(({ data: { session }, error }) => {
+        if (error) {
+          console.error('Session check error:', error);
+        }
+        setSession(session);
+        setUser(session?.user ?? null);
+        if (session?.user) {
+          checkAdminStatus(session.user.id);
+        }
+        clearTimeout(timeoutId);
+        setLoading(false);
+      })
+      .catch((error) => {
+        console.error('Session check failed:', error);
+        clearTimeout(timeoutId);
+        setLoading(false);
+      });
+
+    return () => {
+      subscription.unsubscribe();
+      if (timeoutId) clearTimeout(timeoutId);
+    };
   }, []);
 
   const checkAdminStatus = async (userId: string) => {
-    const { data } = await supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', userId)
-      .eq('role', 'admin')
-      .maybeSingle();
-    
-    setIsAdmin(!!data);
+    try {
+      const { data, error } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userId)
+        .eq('role', 'admin')
+        .maybeSingle();
+      
+      if (error) {
+        console.error('Admin check error:', error);
+        setIsAdmin(false);
+      } else {
+        setIsAdmin(!!data);
+      }
+    } catch (error) {
+      console.error('Admin check failed:', error);
+      setIsAdmin(false);
+    }
   };
 
   const signOut = async () => {
