@@ -5,6 +5,9 @@ export default function Cover() {
   const [loaded, setLoaded] = useState(false);
   // Use Vite's base URL so assets work locally and on GitHub Pages
   const base = (import.meta as any).env.BASE_URL;
+  
+  console.log('Cover component - Base URL:', base);
+  console.log('Hero image path:', `${base}images/hero/hero.png`);
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-sky-50 to-indigo-50">
