@@ -11,7 +11,10 @@ import {
   Search, 
   TrendingUp, 
   Globe,
-  Loader2
+  Loader2,
+  MapPin,
+  Phone,
+  Building
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { geminiService } from '@/services/geminiService';
@@ -41,7 +44,7 @@ export function GeminiChatbot({ complaints = [] }: GeminiChatbotProps) {
     {
       id: '1',
       role: 'assistant',
-      content: 'Hi! I\'m your AI assistant for civic issues. I can help you:\n\n• Analyze community complaint patterns\n• Research similar issues online\n• Provide insights on trending civic problems\n• Suggest solutions based on other cities\n\nWhat would you like to know?',
+      content: '👋 Hi! I\'m Echo, your comprehensive civic assistant. I can help you with:\n\n🏛️ **Citizen Services:**\n• Find nearest police stations, hospitals, government offices\n• Emergency contacts and helpline numbers\n• Government service procedures and requirements\n\n📊 **Community Insights:**\n• Analyze complaint patterns and trends\n• Research solutions from other cities\n• Best practices for civic engagement\n\n📍 **Local Information:**\n• Pincode lookup and area information\n• Authority contacts and office hours\n• Document requirements and procedures\n\n💬 **Just ask me anything like:**\n"Where is the nearest police station?"\n"How do I get a birth certificate?"\n"What are the emergency numbers?"\n\nHow can I help you today?',
       timestamp: new Date(),
       type: 'general'
     }
@@ -58,21 +61,39 @@ export function GeminiChatbot({ complaints = [] }: GeminiChatbotProps) {
 
   const quickActions = [
     {
-      label: 'Analyze Current Trends',
+      label: 'Find Police Station',
+      icon: MapPin,
+      query: 'Where is the nearest police station to my area?',
+      type: 'general' as const
+    },
+    {
+      label: 'Emergency Numbers',
+      icon: Phone,
+      query: 'What are the emergency helpline numbers I should know?',
+      type: 'general' as const
+    },
+    {
+      label: 'Government Services',
+      icon: Building,
+      query: 'How do I get a birth certificate or passport?',
+      type: 'general' as const
+    },
+    {
+      label: 'Pincode Lookup',
+      icon: Search,
+      query: 'What is the pincode for [your area name]?',
+      type: 'general' as const
+    },
+    {
+      label: 'Analyze Trends',
       icon: TrendingUp,
-      query: 'What are the most common complaint types in our community right now?',
+      query: 'What are the most common complaint types in our community?',
       type: 'analysis' as const
     },
     {
-      label: 'Research Online',
-      icon: Search,
-      query: 'Find recent news and discussions about civic issues similar to our community complaints',
-      type: 'research' as const
-    },
-    {
-      label: 'Best Practices',
+      label: 'Research Solutions',
       icon: Globe,
-      query: 'What are some successful solutions other cities have implemented for similar civic issues?',
+      query: 'What are successful solutions other cities have implemented?',
       type: 'research' as const
     }
   ];
@@ -88,27 +109,58 @@ export function GeminiChatbot({ complaints = [] }: GeminiChatbotProps) {
     };
 
     setMessages(prev => [...prev, userMessage]);
+    const currentInput = input;
     setInput('');
     setIsLoading(true);
 
     try {
-      const lowerQuery = input.toLowerCase();
+      const lowerQuery = currentInput.toLowerCase();
       let response;
 
-      if (lowerQuery.includes('trend') || lowerQuery.includes('analyz') || lowerQuery.includes('pattern')) {
-        response = await geminiService.analyzeComplaints(complaints);
-      } else if (lowerQuery.includes('research') || lowerQuery.includes('online') || lowerQuery.includes('web') || lowerQuery.includes('similar')) {
-        response = await geminiService.researchSimilarIssues(input);
-      } else {
-        response = await geminiService.getGeneralResponse(input, { complaints });
+      // Enhanced action detection (inspired by Echo2)
+      let responseText = '';
+
+      // Check for pincode queries
+      const pincodeMatch = currentInput.match(/\b(\d{6})\b/);
+      if (pincodeMatch) {
+        const pincode = pincodeMatch[1];
+        // Use pincode data from Echo2's constants
+        const pincodeData = await import('@/external/echo2/constants').then(module => {
+          return module.PINCODE_DATA?.[pincode];
+        }).catch(() => null);
+        
+        if (pincodeData) {
+          responseText = `📍 **Pincode ${pincode} Information:**\n\n🏢 **Office:** ${pincodeData.officeName}\n📞 **Contact:** ${pincodeData.contact}\n🗺️ **Location:** ${pincodeData.location[0]}, ${pincodeData.location[1]}`;
+        } else {
+          responseText = `Sorry, I don't have information for pincode ${pincode} yet. Please try a major city pincode like:\n• 110001 (Delhi)\n• 400001 (Mumbai)\n• 560001 (Bangalore)\n• 600001 (Chennai)`;
+        }
       }
-      
+      // Check for area to pincode lookup
+      else if (lowerQuery.includes('pincode') && (lowerQuery.includes('for') || lowerQuery.includes('of'))) {
+        const areaMatch = currentInput.match(/(?:pincode.*?(?:for|of)\s+)([\w\s]+)/i);
+        if (areaMatch) {
+          const area = areaMatch[1].trim();
+          responseText = `🔍 Looking up pincode for **${area}**...\n\nFor accurate pincode information, I recommend:\n• Visit India Post website\n• Use Google Maps for exact pincode\n• Contact local post office\n\nCommon areas:\n• Mumbai Central: 400008\n• Delhi CP: 110001\n• Bangalore MG Road: 560001\n• Chennai Central: 600001`;
+        }
+      }
+      // Regular analysis and research queries
+      else if (lowerQuery.includes('trend') || lowerQuery.includes('analyz') || lowerQuery.includes('pattern')) {
+        response = await geminiService.analyzeComplaints(complaints);
+        responseText = response.content;
+      } else if (lowerQuery.includes('research') || lowerQuery.includes('online') || lowerQuery.includes('web') || lowerQuery.includes('similar')) {
+        response = await geminiService.researchSimilarIssues(currentInput);
+        responseText = response.content;
+      } else {
+        response = await geminiService.getGeneralResponse(currentInput, { complaints });
+        responseText = response.content;
+      }
+
       const assistantMessage: ChatMessage = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: response.content,
+        content: responseText,
         timestamp: new Date(),
-        type: response.type
+        type: response?.type || 'general'
       };
 
       setMessages(prev => [...prev, assistantMessage]);
@@ -118,6 +170,7 @@ export function GeminiChatbot({ complaints = [] }: GeminiChatbotProps) {
     } finally {
       setIsLoading(false);
     }
+  };
   };
 
   const handleQuickAction = (action: typeof quickActions[0]) => {
@@ -130,7 +183,7 @@ export function GeminiChatbot({ complaints = [] }: GeminiChatbotProps) {
       <CardHeader className="pb-4">
         <CardTitle className="flex items-center gap-2">
           <Bot className="h-5 w-5" />
-          Community AI Assistant
+          Echo - Civic Assistant
         </CardTitle>
         <div className="flex gap-2">
           <Badge variant="secondary" className="text-xs">
@@ -234,7 +287,7 @@ export function GeminiChatbot({ complaints = [] }: GeminiChatbotProps) {
           <Input
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Ask about civic trends, research solutions, or get insights..."
+            placeholder="Ask about civic services, emergencies, government offices, or community trends..."
             onKeyPress={(e) => e.key === 'Enter' && handleSend()}
             disabled={isLoading}
           />

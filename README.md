@@ -14,11 +14,29 @@ A modern civic engagement platform that allows citizens to report community issu
 ## 🤖 AI Assistant Features
 
 The integrated Echo chatbot (powered by Gemini AI) can help with:
+
+🏛️ **Citizen Services:**
+- Find nearest police stations, hospitals, government offices
+- Emergency contacts and helpline numbers
+- Authority contact information and office hours
+- Government service procedures and requirements
+
+🔧 **Government Services:**
+- Birth certificate, passport, and document procedures
+- Property tax and utility bill guidance
+- License and permit applications
+- Complaint filing and tracking assistance
+
+📍 **Location Services:**
+- Pincode lookup and area information
+- Directions to civic facilities
+- Emergency service locations
+- Local authority contacts
+
+📊 **Community Insights:**
 - Filing complaints and reporting civic issues
-- Finding pincode information and authority contacts
-- Answering questions about civic processes
+- Analyzing complaint patterns and trends
 - Providing guidance on municipal services
-- Location-based assistance
 - Speech recognition for hands-free interaction
 
 ## 🚀 How to run locally

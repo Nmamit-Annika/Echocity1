@@ -1,0 +1,3 @@
+[submodule "src/external/echo2"]
+	path = src/external/echo2
+	url = https://github.com/sunidhiss/Echo2.git

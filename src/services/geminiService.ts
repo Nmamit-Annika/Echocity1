@@ -43,16 +43,43 @@ class GeminiService {
     try {
       const model = this.genAI.getGenerativeModel({ model: this.config.model });
       
-      const systemPrompt = `You are Echo, a helpful civic assistant for Indian cities. You help citizens with:
-      - Filing complaints and reporting civic issues
-      - Providing authority contact information
-      - Finding pincodes and area information
-      - Answering questions about civic processes
-      - Providing guidance on municipal services
+      const systemPrompt = `You are Echo, a comprehensive civic assistant for Indian cities. You help citizens with:
+
+🏛️ CIVIC SERVICES:
+- Finding nearest police stations, hospitals, government offices
+- Authority contact information and office hours  
+- Municipal service procedures and requirements
+- Emergency contact numbers and helplines
+
+📍 LOCATION ASSISTANCE:
+- Pincode lookup and area information
+- Directions to civic facilities
+- Local authority contacts
+- Emergency service locations
+
+🔧 GOVERNMENT SERVICES:
+- Document requirements (birth certificate, passport, etc.)
+- Property tax and utility bill procedures
+- License and permit applications
+- Complaint filing and tracking
+
+📞 EMERGENCY & CONTACTS:
+- Police: 100 | Fire: 101 | Ambulance: 108
+- Women Helpline: 1091 | Child Helpline: 1098
+- Municipal helpline numbers
+- Department-specific contacts
+
+INSTRUCTIONS:
+- Provide specific, actionable information
+- Include contact numbers and addresses when available
+- Use proper formatting with emojis for clarity
+- For location queries, ask for area/pincode if not provided
+- Prioritize emergency information when relevant
+- Be helpful and civic-minded
+
+Context: ${JSON.stringify(context)}
       
-      Context: ${JSON.stringify(context)}
-      
-      Keep responses helpful, concise, and focused on civic assistance. If users need to file a complaint, encourage them to use the complaint form.`;
+Keep responses helpful, concise, and focused on civic assistance. If users need to file a complaint, encourage them to use the complaint form.`;
       
       const result = await model.generateContent([
         systemPrompt,
@@ -180,12 +207,38 @@ class GeminiService {
 
   private buildGeneralPrompt(query: string, context?: any): string {
     return `
-    You are a helpful civic assistant AI. Answer the following question:
+    You are Echo, a comprehensive civic assistant AI for Indian cities. You help citizens with:
     
-    Question: ${query}
+    🏛️ CIVIC SERVICES:
+    - Finding nearest police stations, hospitals, government offices
+    - Authority contact information and office hours
+    - Municipal service procedures and requirements
+    - Complaint filing guidance and tracking
+    
+    📍 LOCATION SERVICES:
+    - Pincode lookup and area information
+    - Distance and directions to civic facilities
+    - Emergency service locations
+    - Public transport information
+    
+    🔍 GENERAL ASSISTANCE:
+    - Legal rights and civic procedures
+    - Document requirements for services
+    - Best practices for civic engagement
+    - Community resources and helplines
+    
+    Query: ${query}
     Context: ${context ? JSON.stringify(context, null, 2) : 'None provided'}
     
-    Provide a helpful, accurate, and actionable response related to civic issues and community engagement.
+    INSTRUCTIONS:
+    - Provide specific, actionable information
+    - Include contact numbers and addresses when possible
+    - Use proper formatting with emojis for clarity
+    - If location-specific, ask for the user's area/pincode
+    - For emergencies, prioritize immediate contact information
+    - Always be helpful and civic-minded
+    
+    Provide a comprehensive, helpful response:
     `;
   }
 
@@ -264,23 +317,33 @@ class GeminiService {
 • Community voting on priority projects
 • Real-time status tracking`,
 
-      general: `💡 **Community Assistant Response**
+      general: `🏛️ **Civic Assistant - How Can I Help You?**
 
-I'm here to help with civic engagement and community improvements. Based on your question, here are some insights:
+**I can help you find:**
+• 🚔 **Police Stations**: Nearest police stations and emergency contacts
+• 🏥 **Hospitals**: Government and private hospitals with emergency services  
+• 🏢 **Government Offices**: Municipal offices, document centers, licensing
+• 📮 **Post Offices**: Postal services and government forms
+• 🚌 **Transport**: Bus stops, metro stations, auto stands
+• 💡 **Utilities**: Electricity board, water authority, gas agencies
 
-**What I can help with:**
-• Analyzing complaint patterns and trends
-• Researching solutions from other cities
-• Providing civic engagement best practices
-• Suggesting process improvements
+**Common Questions I Answer:**
+• "Where is the nearest police station to [area]?"
+• "How do I get a birth certificate in [city]?"
+• "What are the helpline numbers for [service]?"
+• "Where can I pay my property tax?"
+• "How to file a complaint about [issue]?"
 
-**How to get the most value:**
-• Ask specific questions about trends
-• Request comparisons with other communities
-• Inquire about best practices
-• Seek actionable recommendations
+**Emergency Numbers:**
+• Police: 100 | Fire: 101 | Ambulance: 108
+• Women Helpline: 1091 | Child Helpline: 1098
 
-Feel free to ask about anything related to civic issues, community engagement, or municipal services!`
+**Tips:**
+✅ Provide your area/pincode for location-specific help
+✅ Ask about specific services you need
+✅ I can also help with civic procedures and requirements
+
+*What would you like to know about your city's services?*`
     };
 
     return {

@@ -13,9 +13,14 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { Badge } from './ui/badge';
 import { Suspense, lazy } from 'react';
 const CityMap = lazy(() => import('./CityMap').then((m) => ({ default: m.CityMap })));
 import { toast } from 'sonner';
+import { categorizeIssueWithAI, enhanceIssueDescription } from '@/services/aiCategorization';
+import { useEnhancedSpeech } from '@/hooks/useEnhancedSpeech';
+import { MicIcon, MicOffIcon, SparklesIcon, PhotoIcon, EnhanceIcon } from '@/components/icons/EnhancedIcons';
+import { Loader2 } from 'lucide-react';
 
 interface Category {
   id: string;
@@ -44,6 +49,19 @@ export function CreateComplaintDialog({ open, onOpenChange, onSuccess }: CreateC
   });
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  
+  // Enhanced AI features
+  const [isAiCategorizing, setIsAiCategorizing] = useState(false);
+  const [isEnhancing, setIsEnhancing] = useState(false);
+  const [aiSuggestion, setAiSuggestion] = useState<{category: string, confidence: number, reasoning: string} | null>(null);
+  
+  // Enhanced speech recognition
+  const { isListening, startListening, stopListening, isSupported } = useEnhancedSpeech((transcript) => {
+    setFormData(prev => ({
+      ...prev,
+      description: prev.description ? `${prev.description} ${transcript}` : transcript
+    }));
+  });
 
   useEffect(() => {
     if (open) {
@@ -82,6 +100,73 @@ export function CreateComplaintDialog({ open, onOpenChange, onSuccess }: CreateC
     setImageFile(file);
     const url = URL.createObjectURL(file);
     setImagePreview(url);
+  };
+
+  // AI-powered categorization
+  const handleAiCategorization = async () => {
+    if (!formData.description && !imageFile) {
+      toast.error('Please provide a description or image for AI categorization');
+      return;
+    }
+
+    setIsAiCategorizing(true);
+    try {
+      let imageBase64: string | undefined;
+      if (imageFile) {
+        const reader = new FileReader();
+        reader.readAsDataURL(imageFile);
+        imageBase64 = await new Promise((resolve) => {
+          reader.onloadend = () => {
+            const result = reader.result as string;
+            resolve(result.split(',')[1]); // Remove data URL prefix
+          };
+        });
+      }
+
+      const result = await categorizeIssueWithAI(formData.description, imageBase64);
+      setAiSuggestion(result);
+
+      // Auto-select matching category if confidence is high
+      if (result.confidence > 0.7) {
+        const matchedCategory = categories.find(c => 
+          c.name.toLowerCase().includes(result.category.toLowerCase()) ||
+          result.category.toLowerCase().includes(c.name.toLowerCase())
+        );
+        if (matchedCategory) {
+          setFormData(prev => ({ ...prev, category_id: matchedCategory.id }));
+          toast.success(`AI categorized as: ${matchedCategory.name} (${Math.round(result.confidence * 100)}% confidence)`);
+        }
+      }
+    } catch (error) {
+      console.error('AI categorization error:', error);
+      toast.error('AI categorization failed');
+    } finally {
+      setIsAiCategorizing(false);
+    }
+  };
+
+  // AI-powered description enhancement
+  const handleDescriptionEnhancement = async () => {
+    if (!formData.description.trim()) {
+      toast.error('Please enter a description first');
+      return;
+    }
+
+    setIsEnhancing(true);
+    try {
+      const enhanced = await enhanceIssueDescription(formData.description);
+      if (enhanced && enhanced !== formData.description) {
+        setFormData(prev => ({ ...prev, description: enhanced }));
+        toast.success('Description enhanced by AI');
+      } else {
+        toast.info('Description looks good as is!');
+      }
+    } catch (error) {
+      console.error('Description enhancement error:', error);
+      toast.error('Description enhancement failed');
+    } finally {
+      setIsEnhancing(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -232,35 +317,96 @@ export function CreateComplaintDialog({ open, onOpenChange, onSuccess }: CreateC
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="category">Category *</Label>
-            <Select
-              value={formData.category_id}
-              onValueChange={(value) => setFormData({ ...formData, category_id: value })}
-              required
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select a category" />
-              </SelectTrigger>
-              <SelectContent>
-                {categories.map((category) => (
-                  <SelectItem key={category.id} value={category.id}>
-                    {category.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="category">Category *</Label>
+              {aiSuggestion && (
+                <Badge variant="outline" className="text-xs">
+                  AI Suggestion: {aiSuggestion.category} ({Math.round(aiSuggestion.confidence * 100)}%)
+                </Badge>
+              )}
+            </div>
+            <div className="flex gap-2">
+              <Select
+                value={formData.category_id}
+                onValueChange={(value) => setFormData({ ...formData, category_id: value })}
+                required
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map((category) => (
+                    <SelectItem key={category.id} value={category.id}>
+                      {category.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleAiCategorization}
+                disabled={isAiCategorizing || (!formData.description && !imageFile)}
+                className="px-3"
+              >
+                {isAiCategorizing ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <SparklesIcon className="h-4 w-4" />
+                )}
+              </Button>
+            </div>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="description">Description *</Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="description">Description *</Label>
+              <div className="flex gap-2">
+                {isSupported && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={isListening ? stopListening : startListening}
+                    className="px-2"
+                  >
+                    {isListening ? (
+                      <MicOffIcon className="h-4 w-4 text-red-500" />
+                    ) : (
+                      <MicIcon className="h-4 w-4" />
+                    )}
+                  </Button>
+                )}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleDescriptionEnhancement}
+                  disabled={isEnhancing || !formData.description.trim()}
+                  className="px-2"
+                >
+                  {isEnhancing ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <EnhanceIcon className="h-4 w-4" />
+                  )}
+                </Button>
+              </div>
+            </div>
             <Textarea
               id="description"
-              placeholder="Describe the issue in detail..."
+              placeholder="Describe the issue in detail... (click mic button for voice input)"
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               rows={4}
               required
+              className={isListening ? 'ring-2 ring-red-500' : ''}
             />
+            {isListening && (
+              <p className="text-sm text-red-600 animate-pulse">
+                🎤 Listening... Speak now
+              </p>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -270,16 +416,50 @@ export function CreateComplaintDialog({ open, onOpenChange, onSuccess }: CreateC
             </p>
             <div className="space-y-2 mb-4">
               <Label htmlFor="photo">Photo (optional)</Label>
-              <input
-                id="photo"
-                type="file"
-                accept="image/*"
-                onChange={(e) => handleImageChange(e.target.files?.[0])}
-                className="w-full"
-              />
-              {imagePreview && (
-                <img src={imagePreview} alt="preview" className="mt-2 max-h-40 object-cover rounded" />
-              )}
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 hover:border-teal-500 transition-colors">
+                {imagePreview ? (
+                  <div className="relative">
+                    <img 
+                      src={imagePreview} 
+                      alt="preview" 
+                      className="w-full max-h-48 object-cover rounded-lg" 
+                    />
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      className="absolute top-2 right-2"
+                      onClick={() => {
+                        setImageFile(null);
+                        setImagePreview(null);
+                        setAiSuggestion(null);
+                      }}
+                    >
+                      ✕
+                    </Button>
+                  </div>
+                ) : (
+                  <label 
+                    htmlFor="photo" 
+                    className="flex flex-col items-center justify-center py-8 cursor-pointer"
+                  >
+                    <PhotoIcon className="h-12 w-12 text-gray-400 mb-2" />
+                    <span className="text-sm text-gray-600">
+                      Click to upload a photo
+                    </span>
+                    <span className="text-xs text-gray-500 mt-1">
+                      PNG, JPG up to 10MB
+                    </span>
+                  </label>
+                )}
+                <input
+                  id="photo"
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => handleImageChange(e.target.files?.[0])}
+                  className="hidden"
+                />
+              </div>
             </div>
             <div className="h-[300px] border rounded-lg overflow-hidden">
               <Suspense fallback={<div className="flex items-center justify-center h-full">Loading map…</div>}>
