@@ -67,6 +67,14 @@ export function CityMap({ complaints = [], onLocationSelect, center = [72.8777, 
   // Previous center prop was [lng, lat] for Mapbox; Leaflet expects [lat, lng]
   const leafletCenter: [number, number] = [center[1], center[0]];
 
+  // Debug complaints data
+  console.log('🗺️ CityMap Debug:', {
+    totalComplaints: complaints.length,
+    complaintsWithCoords: complaints.filter(c => c.latitude != null && c.longitude != null).length,
+    sampleComplaint: complaints[0],
+    center: leafletCenter
+  });
+
   useEffect(() => {
     // no-op; placeholder for potential future side-effects
   }, []);
@@ -87,21 +95,44 @@ export function CityMap({ complaints = [], onLocationSelect, center = [72.8777, 
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
 
-        {complaints.map((c) => (
-          <CircleMarker
-            key={c.id}
-            center={[c.latitude, c.longitude]}
-            radius={8}
-            pathOptions={{ color: statusColors[c.status] || '#6b7280', fillColor: statusColors[c.status] || '#6b7280', fillOpacity: 1 }}
-          >
-            <Popup>
-              <div className="p-2">
-                <h3 className="font-semibold">{c.title}</h3>
-                <p className="text-sm text-gray-600">{c.status}</p>
-              </div>
-            </Popup>
-          </CircleMarker>
-        ))}
+        {complaints
+          .filter((c) => {
+            const hasCoords = c.latitude != null && c.longitude != null;
+            console.log('🔍 Checking complaint:', {
+              id: c.id,
+              title: c.title?.substring(0, 30) + '...',
+              lat: c.latitude,
+              lng: c.longitude,
+              hasCoords,
+              status: c.status
+            });
+            return hasCoords;
+          })
+          .map((c) => {
+            console.log('✅ Rendering marker for:', c.title?.substring(0, 30));
+            return (
+              <CircleMarker
+                key={c.id}
+                center={[c.latitude, c.longitude]}
+                pathOptions={{ 
+                  color: statusColors[c.status] || '#6b7280', 
+                  fillColor: statusColors[c.status] || '#6b7280', 
+                  fillOpacity: 1,
+                  radius: 8,
+                  weight: 3
+                }}
+              >
+                <Popup>
+                  <div className="p-2">
+                    <h3 className="font-semibold">{c.title}</h3>
+                    <p className="text-sm text-gray-600">{c.status}</p>
+                    <p className="text-xs text-gray-500">{c.address || 'No address'}</p>
+                  </div>
+                </Popup>
+              </CircleMarker>
+            );
+          }
+        )}
 
         {onLocationSelect && <ClickHandler onLocationSelect={onLocationSelect} />}
       </MapContainer>

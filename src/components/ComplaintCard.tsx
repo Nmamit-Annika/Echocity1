@@ -96,11 +96,11 @@ export function ComplaintCard({ complaint, onStatusUpdate, isAdmin, showUserInfo
           </div>
           <div className="flex items-center gap-2">
             <Building className="h-4 w-4 text-muted-foreground" />
-            <span className="text-muted-foreground">{complaint.departments.name}</span>
+            <span className="text-muted-foreground">{complaint.departments?.name || 'No department assigned'}</span>
           </div>
           <div className="flex items-center gap-2">
             <User className="h-4 w-4 text-muted-foreground" />
-            <span className="text-muted-foreground">{complaint.profiles.full_name}</span>
+            <span className="text-muted-foreground">{complaint.profiles?.full_name || 'Unknown user'}</span>
           </div>
         </div>
 

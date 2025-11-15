@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { MapPin, Users, TrendingUp, Calendar } from 'lucide-react';
 import { ComplaintCard } from '@/components/ComplaintCard';
 import { GeminiChatbot } from '@/components/GeminiChatbot';
+import { CityMap } from '@/components/CityMap';
 import { debugUrls } from '@/utils/urlUtils';
 
 interface CommunityComplaint {
@@ -299,17 +300,11 @@ export default function CommunityDashboard() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="h-[600px] rounded-lg overflow-hidden bg-muted flex items-center justify-center">
-                  <div className="text-center">
-                    <MapPin className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold mb-2">Interactive Map</h3>
-                    <p className="text-muted-foreground mb-4">
-                      Showing {complaints.length} community reports across the city
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      Map functionality will be restored once leaflet types are properly installed
-                    </p>
-                  </div>
+                <div className="h-[600px] rounded-lg overflow-hidden">
+                  <CityMap 
+                    complaints={complaints} 
+                    center={[72.8777, 19.0760]}
+                  />
                 </div>
               </CardContent>
             </Card>

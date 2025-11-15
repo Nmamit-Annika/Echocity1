@@ -52,6 +52,8 @@ const Index = () => {
   }, [user]);
 
   const fetchComplaints = async () => {
+    console.log('📋 Fetching complaints for user:', user?.id);
+    
     const { data, error } = await supabase
       .from('complaints')
       .select(`
@@ -61,6 +63,8 @@ const Index = () => {
       `)
       .eq('user_id', user?.id)
       .order('created_at', { ascending: false });
+
+    console.log('📋 Complaints query result:', { data, error, count: data?.length });
 
     if (error) {
       toast.error('Failed to fetch complaints');
@@ -75,11 +79,27 @@ const Index = () => {
         .eq('id', user?.id)
         .single();
 
-      // Transform data to include profile
-      const transformedData = data.map(item => ({
+      // Transform data to include profile and fix coordinate naming
+      const transformedData = data.map((item: any) => ({
         ...item,
+        // Map database column names to what CityMap expects
+        latitude: item.location_lat,
+        longitude: item.location_lng,
+        address: item.location_address,
         profiles: profile || { full_name: 'Unknown User' }
       }));
+      
+      console.log('🔗 Final transformed complaints for map:', {
+        count: transformedData.length,
+        sampleData: transformedData[0],
+        sampleCoords: transformedData[0] ? {
+          latitude: transformedData[0].latitude,
+          longitude: transformedData[0].longitude,
+          address: transformedData[0].address,
+          dbLat: transformedData[0].location_lat,
+          dbLng: transformedData[0].location_lng
+        } : 'No data'
+      });
       
       setComplaints(transformedData as Complaint[]);
     }
