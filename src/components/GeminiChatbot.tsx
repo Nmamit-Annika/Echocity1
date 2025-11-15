@@ -124,15 +124,14 @@ export function GeminiChatbot({ complaints = [] }: GeminiChatbotProps) {
       const pincodeMatch = currentInput.match(/\b(\d{6})\b/);
       if (pincodeMatch) {
         const pincode = pincodeMatch[1];
-        // Use pincode data from Echo2's constants
-        const pincodeData = await import('@/external/echo2/constants').then(module => {
-          return module.PINCODE_DATA?.[pincode];
-        }).catch(() => null);
+        // Use local pincode data
+        const { PINCODE_DATA } = await import('@/data/pincodeData');
+        const pincodeData = PINCODE_DATA[pincode];
         
         if (pincodeData) {
-          responseText = `📍 **Pincode ${pincode} Information:**\n\n🏢 **Office:** ${pincodeData.officeName}\n📞 **Contact:** ${pincodeData.contact}\n🗺️ **Location:** ${pincodeData.location[0]}, ${pincodeData.location[1]}`;
+          responseText = `📍 **Pincode ${pincode} Information:**\n\n🏢 **Office:** ${pincodeData.officeName}\n📞 **Contact:** ${pincodeData.contact}\n🌍 **City:** ${pincodeData.city}\n🗺️ **Location:** ${pincodeData.location[0]}, ${pincodeData.location[1]}`;
         } else {
-          responseText = `Sorry, I don't have information for pincode ${pincode} yet. Please try a major city pincode like:\n• 110001 (Delhi)\n• 400001 (Mumbai)\n• 560001 (Bangalore)\n• 600001 (Chennai)`;
+          responseText = `Sorry, I don't have information for pincode ${pincode} yet. Please try a major city pincode like:\n• 110001 (Delhi)\n• 400001 (Mumbai)\n• 560001 (Bangalore)\n• 600001 (Chennai)\n• 500001 (Hyderabad)\n• 700001 (Kolkata)`;
         }
       }
       // Check for area to pincode lookup
