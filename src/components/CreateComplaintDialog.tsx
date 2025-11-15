@@ -52,9 +52,23 @@ export function CreateComplaintDialog({ open, onOpenChange, onSuccess }: CreateC
   }, [open]);
 
   const fetchCategories = async () => {
-    const { data } = await supabase.from('categories').select('*');
-    if (data) {
-      setCategories(data);
+    try {
+      console.log('Fetching categories...');
+      const { data, error } = await supabase.from('categories').select('*');
+      
+      if (error) {
+        console.error('Categories fetch error:', error);
+        toast.error('Failed to load categories. Please run database setup first.');
+        return;
+      }
+      
+      console.log('Categories fetched successfully:', data);
+      if (data) {
+        setCategories(data);
+      }
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+      toast.error('Failed to load complaint categories. Check database setup.');
     }
   };
 
@@ -73,6 +87,11 @@ export function CreateComplaintDialog({ open, onOpenChange, onSuccess }: CreateC
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+
+    console.log('=== COMPLAINT SUBMISSION DEBUG ===');
+    console.log('User:', user);
+    console.log('Form data:', formData);
+    console.log('Categories loaded:', categories.length);
 
     try {
       // Check for duplicate complaints
@@ -137,19 +156,36 @@ export function CreateComplaintDialog({ open, onOpenChange, onSuccess }: CreateC
       // Get department_id from selected category
       const selectedCategory = categories.find(c => c.id === formData.category_id);
       
-      const { error } = await supabase.from('complaints').insert({
+      console.log('About to insert complaint:', {
         user_id: user?.id,
         title: formData.title,
         description: formData.description,
         category_id: formData.category_id,
         department_id: selectedCategory?.department_id,
-        latitude: formData.latitude,
-        longitude: formData.longitude,
-        address: formData.address,
-        image_urls: imageUrls,
+        location_lat: formData.latitude,
+        location_lng: formData.longitude,
+        location_address: formData.address,
+        image_url: imageUrls && imageUrls.length > 0 ? imageUrls[0] : null
       });
+      
+      const { data, error } = await supabase.from('complaints').insert({
+        user_id: user?.id,
+        title: formData.title,
+        description: formData.description,
+        category_id: formData.category_id,
+        department_id: selectedCategory?.department_id,
+        location_lat: formData.latitude,
+        location_lng: formData.longitude,
+        location_address: formData.address,
+        image_url: imageUrls && imageUrls.length > 0 ? imageUrls[0] : null, // Use first image URL
+      });
+      
+      console.log('Insert result:', { data, error });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase insert error:', error);
+        throw error;
+      }
 
       toast.success('Complaint submitted successfully!');
       onOpenChange(false);
@@ -165,7 +201,9 @@ export function CreateComplaintDialog({ open, onOpenChange, onSuccess }: CreateC
         address: '',
       });
     } catch (error) {
-      toast.error('Failed to submit complaint');
+      console.error('Complete error details:', error);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      toast.error(`Failed to submit complaint: ${errorMessage}`);
     } finally {
       setLoading(false);
     }
