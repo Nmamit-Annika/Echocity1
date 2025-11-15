@@ -148,3 +148,4 @@ It listens by default on `http://localhost:8787/analyze` and your frontend will 
 To wire the real Gemini/Vertex API, deploy a small serverless function that accepts an image URL, calls the Gemini multimodal endpoint (using a service account or API key kept secret on the server), and returns structured JSON: `{ label, confidence, notes }`.
 
 If you'd like, I can add an example serverless function for Vertex/PaLM that demonstrates sending the image and parsing results (I won't include your keys in the repo). 
+ 
