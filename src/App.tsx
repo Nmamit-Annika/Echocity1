@@ -23,7 +23,7 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <BrowserRouter basename="/Echocity1">
+      <BrowserRouter basename={(import.meta as any).env.MODE === 'development' ? '/' : '/Echocity1'}>
         <AuthProvider>
           <MainLayout>
             <Routes>
