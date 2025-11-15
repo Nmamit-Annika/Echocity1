@@ -171,7 +171,6 @@ export function GeminiChatbot({ complaints = [] }: GeminiChatbotProps) {
       setIsLoading(false);
     }
   };
-  };
 
   const handleQuickAction = (action: typeof quickActions[0]) => {
     setInput(action.query);
