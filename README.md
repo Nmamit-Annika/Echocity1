@@ -1,6 +1,7 @@
 # EchoCity - Community Civic Dashboard with AI Assistant
 
 A modern civic engagement platform that allows citizens to report community issues, track complaint status, and get AI-powered assistance for civic matters.
+visit: https://nmamit-annika.github.io/Echocity1/
 
 ## ✨ Features
 
