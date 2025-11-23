@@ -51,7 +51,7 @@ jobs:
           echo "VITE_GEMINI_API_KEY=${{ secrets.VITE_GEMINI_API_KEY }}" >> .env.production
 
       - name: Build
-        run: npm run build
+        run: NODE_ENV=production npm run build
         env:
           NODE_ENV: production
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
@@ -60,12 +60,14 @@ jobs:
 
       - name: Verify build output
         run: |
+          echo "=== Environment check ==="
+          echo "NODE_ENV: $NODE_ENV"
           echo "=== Checking dist/index.html exists ==="
           ls -la dist/
           echo "=== Checking for 404.html ==="
           ls -la dist/404.html || echo "404.html not found"
-          echo "=== First 30 lines of dist/index.html ==="
-          head -n 30 dist/index.html
+          echo "=== Content of dist/index.html ==="
+          cat dist/index.html
           echo "=== Checking asset files ==="
           ls -la dist/assets/
 
