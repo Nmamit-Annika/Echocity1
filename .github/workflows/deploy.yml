@@ -62,8 +62,28 @@ jobs:
         run: |
           echo "=== Checking dist/index.html exists ==="
           ls -la dist/
+          echo "=== Checking for 404.html ==="
+          ls -la dist/404.html || echo "404.html not found"
           echo "=== First 30 lines of dist/index.html ==="
           head -n 30 dist/index.html
+          echo "=== Checking asset files ==="
+          ls -la dist/assets/
+
+      - name: Fix GitHub Pages routing
+        run: |
+          # Ensure 404.html exists for SPA routing
+          if [ ! -f dist/404.html ]; then
+            cp public/404.html dist/404.html
+            echo "Copied 404.html to dist directory"
+          fi
+          # Ensure .nojekyll exists to prevent Jekyll processing
+          if [ ! -f dist/.nojekyll ]; then
+            touch dist/.nojekyll
+            echo "Created .nojekyll file"
+          fi
+          # Create additional debugging info
+          echo "=== Final dist structure ==="
+          find dist -type f | head -20
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
