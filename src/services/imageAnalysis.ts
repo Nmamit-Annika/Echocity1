@@ -27,8 +27,8 @@ class ImageAnalysisService {
     }
 
     try {
-      // Use gemini-1.5-flash which supports vision
-      const model = this.genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+      // Use gemini-pro-vision for image analysis
+      const model = this.genAI.getGenerativeModel({ model: 'gemini-pro-vision' });
 
       const prompt = `Analyze this civic complaint image and provide:
 
