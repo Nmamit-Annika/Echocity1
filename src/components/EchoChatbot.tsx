@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { chatbotService, EchoChatMessage, PINCODE_DATA } from '@/services/chatbotService';
+import { sendMessageToGemini, LocationData } from '@/services/newGeminiService';
 import { useSpeech } from '@/hooks/useSpeech';
 import { useGeolocation } from '@/hooks/useGeolocation';
 import { 
@@ -12,6 +12,16 @@ import {
   SpinnerIcon 
 } from '@/components/ui/chat-icons';
 import { useNavigate } from 'react-router-dom';
+import ReactMarkdown from 'react-markdown';
+
+interface ChatMessage {
+  id: number;
+  text: string;
+  sender: 'user' | 'bot';
+  timestamp: Date;
+  isTyping?: boolean;
+  groundingChunks?: any[];
+}
 
 interface ChatbotProps {
   isOpen: boolean;
@@ -29,16 +39,18 @@ const EchoChatbot: React.FC<ChatbotProps> = ({
   onFileComplaint 
 }) => {
   const navigate = useNavigate();
-  const [messages, setMessages] = useState<EchoChatMessage[]>([
+  const [messages, setMessages] = useState<ChatMessage[]>([
     { 
       id: 1, 
-      text: "Hello! I'm Echo, your civic assistant. I can help you file complaints, find pincode information, get authority contacts, or answer questions about civic issues. How can I help you today?", 
+      text: "Hello! I'm Echo, your civic assistant with access to real-time Maps and Search. I can help you:\n\n• Find nearby government offices, police stations, hospitals\n• Get pincode information and authority contacts\n• Answer questions about civic procedures\n• File complaints about local issues\n\nHow can I help you today?", 
       sender: 'bot',
       timestamp: new Date()
     }
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [useSearch, setUseSearch] = useState(true);
+  const [useMaps, setUseMaps] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const { location } = useGeolocation();
@@ -120,7 +132,7 @@ const EchoChatbot: React.FC<ChatbotProps> = ({
   const sendMessage = async () => {
     if (!input.trim()) return;
 
-    const newUserMessage: EchoChatMessage = { 
+    const newUserMessage: ChatMessage = { 
       id: Date.now(), 
       text: input, 
       sender: 'user',
@@ -143,20 +155,35 @@ const EchoChatbot: React.FC<ChatbotProps> = ({
     setIsLoading(true);
 
     try {
-      const response = await chatbotService.getChatbotResponse(input, {
-        currentLocation: location,
-        supportedPincodes: chatbotService.getAllSupportedPincodes(),
-        platform: 'EchoCity'
+      const history = messages.map(m => ({
+        role: m.sender === 'user' ? 'user' : 'model',
+        parts: [{ text: m.text }]
+      }));
+
+      const geoLocation: LocationData | null = location ? {
+        latitude: location.latitude,
+        longitude: location.longitude
+      } : null;
+
+      const response = await sendMessageToGemini({
+        prompt: newUserMessage.text,
+        model: 'gemini-2.5-flash',
+        history: history,
+        useSearch: useSearch,
+        useMaps: useMaps,
+        location: geoLocation
       });
 
-      try {
-        // Check if response is a structured JSON action
-        const action = JSON.parse(response);
-        handleAction(action);
-      } catch (e) {
-        // If not JSON, it's a regular text response
-        addBotMessage(response);
-      }
+      setMessages(prev => {
+        const newMessages = prev.filter(m => !m.isTyping);
+        return [...newMessages, { 
+          id: Date.now(), 
+          text: response.text, 
+          sender: 'bot',
+          timestamp: new Date(),
+          groundingChunks: response.groundingChunks
+        }];
+      });
     } catch (error) {
       console.error('Chat error:', error);
       addBotMessage("I'm sorry, I'm having trouble right now. Please try again in a moment.");
@@ -206,7 +233,50 @@ const EchoChatbot: React.FC<ChatbotProps> = ({
                       ? 'bg-primary text-primary-foreground' 
                       : 'bg-background text-foreground shadow-sm border border-border'
                   }`}>
-                    <p className="text-sm whitespace-pre-wrap">{msg.text}</p>
+                    <div className="text-sm prose prose-sm max-w-none">
+                      <ReactMarkdown>{msg.text}</ReactMarkdown>
+                    </div>
+                    
+                    {/* Grounding Sources */}
+                    {msg.sender === 'bot' && msg.groundingChunks && msg.groundingChunks.length > 0 && (
+                      <div className="mt-2 pt-2 border-t border-border/50">
+                        <p className="text-[9px] uppercase text-muted-foreground mb-1">Sources</p>
+                        <div className="flex flex-wrap gap-1">
+                          {msg.groundingChunks.map((chunk: any, idx: number) => {
+                            if (chunk.web) {
+                              return (
+                                <a 
+                                  key={`web-${idx}`}
+                                  href={chunk.web.uri}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-[10px] bg-blue-100 text-blue-800 px-2 py-0.5 rounded truncate max-w-[120px]"
+                                  title={chunk.web.title}
+                                >
+                                  🌐 {chunk.web.title?.substring(0, 15) || 'Link'}
+                                </a>
+                              );
+                            }
+                            if (chunk.maps) {
+                              return (
+                                <a 
+                                  key={`map-${idx}`}
+                                  href={chunk.maps.uri}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-[10px] bg-green-100 text-green-800 px-2 py-0.5 rounded truncate max-w-[120px]"
+                                  title={chunk.maps.title}
+                                >
+                                  📍 {chunk.maps.title?.substring(0, 15) || 'Maps'}
+                                </a>
+                              );
+                            }
+                            return null;
+                          })}
+                        </div>
+                      </div>
+                    )}
+                    
                     {msg.sender === 'bot' && (
                       <button 
                         onClick={() => speak(msg.text)} 
