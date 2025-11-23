@@ -276,8 +276,134 @@ Keep responses helpful, concise, and focused on civic assistance. If users need 
     };
   }
 
-  private getMockResponse(_prompt: string, type: 'analysis' | 'research' | 'general'): GeminiResponse {
-    // Enhanced mock responses for development
+  private getMockResponse(prompt: string, type: 'analysis' | 'research' | 'general'): GeminiResponse {
+    // Query-aware mock responses for development/fallback
+    const lowerPrompt = prompt.toLowerCase();
+    
+    // Check if it's a specific query type
+    if (lowerPrompt.includes('police') || lowerPrompt.includes('station')) {
+      return {
+        content: `🚔 **Police Station Information**
+
+**Emergency Contact:** 100 (24/7)
+
+**To find your nearest police station:**
+1. Provide your area/pincode
+2. Or visit your city's police website
+3. Use Google Maps: search "police station near me"
+
+**Common Services:**
+• FIR registration
+• Lost property reports
+• Verification certificates
+• Emergency assistance
+
+**Online Services:**
+Many police departments now offer online:
+• FIR filing
+• Complaint tracking
+• NOC applications
+
+*What's your area/pincode? I can help you find the nearest station.*`,
+        type: 'general',
+        confidence: 0.85
+      };
+    }
+    
+    if (lowerPrompt.includes('hospital') || lowerPrompt.includes('medical') || lowerPrompt.includes('emergency')) {
+      return {
+        content: `🏥 **Medical & Hospital Information**
+
+**Emergency Numbers:**
+• Ambulance: 108 (Free Emergency)
+• Private Ambulance: 1298
+• Medical Emergency: 102
+
+**Government Hospitals:**
+Most cities have district hospitals offering:
+• 24/7 emergency services
+• Free/subsidized treatment
+• Specialist consultation
+• Diagnostic facilities
+
+**Finding Nearest Hospital:**
+1. Call 108 for immediate help
+2. Use Google Maps: "hospital near me"
+3. City health department helpline
+4. Provide your area for specific recommendations
+
+*Share your location/pincode for nearby hospital details.*`,
+        type: 'general',
+        confidence: 0.85
+      };
+    }
+    
+    if (lowerPrompt.includes('birth certificate') || lowerPrompt.includes('passport') || lowerPrompt.includes('document')) {
+      return {
+        content: `📄 **Document Services Guide**
+
+**Birth Certificate:**
+1. Visit local Municipal Corporation office
+2. Required: Hospital birth record, parents' ID
+3. Online: Most cities offer e-services portal
+4. Time: 7-15 days
+5. Fee: ₹50-200 (varies by city)
+
+**Passport:**
+1. Apply online: www.passportindia.gov.in
+2. Book appointment at PSK
+3. Required: Address proof, ID proof, birth certificate
+4. Time: 30-45 days (normal), 7 days (tatkal)
+5. Fee: ₹1,500 (normal), ₹3,500 (tatkal)
+
+**General Documents:**
+• Ration Card: Food & Civil Supplies dept
+• Driving License: RTO office
+• Voter ID: Election Commission office
+
+*Which specific document do you need help with?*`,
+        type: 'general',
+        confidence: 0.9
+      };
+    }
+    
+    if (lowerPrompt.includes('emergency') || lowerPrompt.includes('helpline') || lowerPrompt.includes('number')) {
+      return {
+        content: `📞 **Emergency & Helpline Numbers**
+
+**General Emergencies:**
+• Police: 100
+• Fire: 101
+• Ambulance: 108
+• Disaster Management: 1078
+
+**Special Services:**
+• Women Helpline: 1091
+• Child Helpline: 1098
+• Senior Citizen: 1291
+• Road Accident: 1073
+
+**Utilities:**
+• Electricity: Check state board number
+• Gas Leak: 1906
+• Water Supply: Municipal helpline
+
+**Government Services:**
+• IVRS Citizen Services: 155300
+• Railway Enquiry: 139
+• Airlines: 1800-180-1407
+
+**Mental Health:**
+• NIMHANS: 080-46110007
+• Vandrevala Foundation: 9999 666 555
+
+*Save these numbers! Need specific department contact?*`,
+        type: 'general',
+        confidence: 0.95
+      };
+    }
+    
+    // Default responses by type
     const mockResponses = {
       analysis: `📊 **Community Data Analysis**
 

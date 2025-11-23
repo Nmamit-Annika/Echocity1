@@ -171,9 +171,59 @@ export function GeminiChatbot({ complaints = [] }: GeminiChatbotProps) {
     }
   };
 
-  const handleQuickAction = (action: typeof quickActions[0]) => {
-    setInput(action.query);
-    handleSend();
+  const handleQuickAction = async (action: typeof quickActions[0]) => {
+    const userMessage: ChatMessage = {
+      id: Date.now().toString(),
+      role: 'user',
+      content: action.query,
+      timestamp: new Date()
+    };
+
+    setMessages(prev => [...prev, userMessage]);
+    setIsLoading(true);
+
+    try {
+      const lowerQuery = action.query.toLowerCase();
+      let response;
+      let responseText = '';
+
+      // Enhanced action detection
+      const pincodeMatch = action.query.match(/\b(\d{6})\b/);
+      if (pincodeMatch) {
+        const pincode = pincodeMatch[1];
+        const { PINCODE_DATA } = await import('@/data/pincodeData');
+        const pincodeData = PINCODE_DATA[pincode];
+        
+        if (pincodeData) {
+          responseText = `📍 **Pincode ${pincode} Information:**\n\n🏢 **Office:** ${pincodeData.officeName}\n📞 **Contact:** ${pincodeData.contact}\n🌍 **City:** ${pincodeData.city}\n🗺️ **Location:** ${pincodeData.location[0]}, ${pincodeData.location[1]}`;
+        }
+      }
+      else if (lowerQuery.includes('trend') || lowerQuery.includes('analyz') || lowerQuery.includes('pattern')) {
+        response = await geminiService.analyzeComplaints(complaints);
+        responseText = response.content;
+      } else if (lowerQuery.includes('research') || lowerQuery.includes('online') || lowerQuery.includes('web') || lowerQuery.includes('similar')) {
+        response = await geminiService.researchSimilarIssues(action.query);
+        responseText = response.content;
+      } else {
+        response = await geminiService.getGeneralResponse(action.query, { complaints });
+        responseText = response.content;
+      }
+
+      const assistantMessage: ChatMessage = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: responseText,
+        timestamp: new Date(),
+        type: response?.type || 'general'
+      };
+
+      setMessages(prev => [...prev, assistantMessage]);
+    } catch (error) {
+      toast.error('Failed to get AI response');
+      console.error('AI Error:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
