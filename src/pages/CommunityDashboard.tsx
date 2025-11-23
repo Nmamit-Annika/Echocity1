@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { MapPin, Users, TrendingUp, Calendar } from 'lucide-react';
 import { ComplaintCard } from '@/components/ComplaintCard';
-import { GeminiChatbot } from '@/components/GeminiChatbot';
+import { NewGeminiChatbot } from '@/components/NewGeminiChatbot';
 import { CityMap } from '@/components/CityMap';
 import { debugUrls } from '@/utils/urlUtils';
 
@@ -331,7 +331,7 @@ export default function CommunityDashboard() {
 
           <TabsContent value="ai" className="mt-6">
             <div className="h-[700px]">
-              <GeminiChatbot complaints={complaints} />
+              <NewGeminiChatbot complaints={complaints} />
             </div>
           </TabsContent>
         </Tabs>

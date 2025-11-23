@@ -74,13 +74,6 @@ export function CityMap({ complaints = [], onLocationSelect, center = [72.8777, 
     }
     return hasCoords;
   });
-  
-  console.log('🗺️ CityMap rendering:', {
-    totalComplaints: complaints.length,
-    withCoordinates: complaintsWithCoords.length,
-    sampleComplaint: complaintsWithCoords[0],
-    center: leafletCenter
-  });
 
   useEffect(() => {
     // no-op; placeholder for potential future side-effects

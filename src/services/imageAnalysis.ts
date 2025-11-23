@@ -1,5 +1,4 @@
-// AI Image Analysis Service using Gemini Vision
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GoogleGenAI } from '@google/genai';
 
 interface ImageAnalysisResult {
   title: string;
@@ -10,25 +9,20 @@ interface ImageAnalysisResult {
 }
 
 class ImageAnalysisService {
-  private genAI?: GoogleGenerativeAI;
   private apiKey?: string;
 
   constructor() {
-    this.apiKey = (import.meta as any).env?.VITE_GEMINI_API_KEY;
-    if (this.apiKey) {
-      this.genAI = new GoogleGenerativeAI(this.apiKey);
-    }
+    this.apiKey = (import.meta as any).env?.VITE_GEMINI_API_KEY || 
+                  (typeof process !== 'undefined' && process.env?.API_KEY);
   }
 
   async analyzeComplaintImage(imageBase64: string, mimeType: string = 'image/jpeg'): Promise<ImageAnalysisResult> {
-    if (!this.genAI) {
-      console.log('No Gemini API key, using mock analysis');
+    if (!this.apiKey) {
       return this.getMockAnalysis();
     }
 
     try {
-      // Use gemini-pro-vision for image analysis
-      const model = this.genAI.getGenerativeModel({ model: 'gemini-pro-vision' });
+      const ai = new GoogleGenAI({ apiKey: this.apiKey });
 
       const prompt = `Analyze this civic complaint image and provide:
 
@@ -45,32 +39,33 @@ DESCRIPTION: [description]
 CATEGORY: [category name]
 DETAILS: [bullet points]`;
 
-      console.log('Sending image to Gemini for analysis...');
-      const result = await model.generateContent([
-        prompt,
-        {
-          inlineData: {
-            data: imageBase64,
-            mimeType: mimeType
-          }
-        }
-      ]);
+      const result = await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: [{
+          role: 'user',
+          parts: [
+            { text: prompt },
+            {
+              inlineData: {
+                data: imageBase64,
+                mimeType: mimeType
+              }
+            }
+          ]
+        }]
+      });
 
-      const response = await result.response;
-      const text = response.text();
-      console.log('Gemini vision response:', text);
+      const text = result.text || '';
 
       return this.parseResponse(text);
     } catch (error) {
-      console.error('Image analysis error:', error);
-      console.error('Error details:', error instanceof Error ? error.message : error);
+      console.error('Image analysis failed:', error);
       return this.getMockAnalysis();
     }
   }
 
   private parseResponse(text: string): ImageAnalysisResult {
     const lines = text.split('\n').filter(l => l.trim());
-    
     let title = '';
     let description = '';
     let category = '';

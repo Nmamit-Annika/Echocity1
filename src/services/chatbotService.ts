@@ -16,7 +16,7 @@ interface ChatAction {
   data?: any;
 }
 
-// Enhanced pincode data for major Indian cities
+// Pincode data for major Indian cities
 const PINCODE_DATA: Record<string, {
   officeName: string;
   contact: string;

@@ -44,7 +44,7 @@ export function GeminiChatbot({ complaints = [] }: GeminiChatbotProps) {
     {
       id: '1',
       role: 'assistant',
-      content: '👋 Hi! I\'m Echo, your comprehensive civic assistant. I can help you with:\n\n🏛️ **Citizen Services:**\n• Find nearest police stations, hospitals, government offices\n• Emergency contacts and helpline numbers\n• Government service procedures and requirements\n\n📊 **Community Insights:**\n• Analyze complaint patterns and trends\n• Research solutions from other cities\n• Best practices for civic engagement\n\n📍 **Local Information:**\n• Pincode lookup and area information\n• Authority contacts and office hours\n• Document requirements and procedures\n\n💬 **Just ask me anything like:**\n"Where is the nearest police station?"\n"How do I get a birth certificate?"\n"What are the emergency numbers?"\n\nHow can I help you today?',
+      content: 'Hi! I\'m Echo, your civic assistant. I can help you with:\n\n**Citizen Services:**\n• Find nearest police stations, hospitals, government offices\n• Emergency contacts and helpline numbers\n• Government service procedures and requirements\n\n**Community Insights:**\n• Analyze complaint patterns and trends\n• Research solutions from other cities\n• Best practices for civic engagement\n\n**Local Information:**\n• Pincode lookup and area information\n• Authority contacts and office hours\n• Document requirements and procedures\n\n**Just ask me anything like:**\n"Where is the nearest police station?"\n"How do I get a birth certificate?"\n"What are the emergency numbers?"\n\nHow can I help you today?',
       timestamp: new Date(),
       type: 'general'
     }
@@ -117,7 +117,6 @@ export function GeminiChatbot({ complaints = [] }: GeminiChatbotProps) {
       const lowerQuery = currentInput.toLowerCase();
       let response;
 
-      // Enhanced action detection (inspired by Echo2)
       let responseText = '';
 
       // Check for pincode queries
@@ -187,7 +186,6 @@ export function GeminiChatbot({ complaints = [] }: GeminiChatbotProps) {
       let response;
       let responseText = '';
 
-      // Enhanced action detection
       const pincodeMatch = action.query.match(/\b(\d{6})\b/);
       if (pincodeMatch) {
         const pincode = pincodeMatch[1];

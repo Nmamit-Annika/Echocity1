@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
 
-// Enhanced Speech Recognition with better browser support
 declare global {
   interface Window {
     SpeechRecognition: any;

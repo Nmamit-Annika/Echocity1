@@ -50,14 +50,11 @@ export function CreateComplaintDialog({ open, onOpenChange, onSuccess }: CreateC
   });
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [isAnalyzingImage, setIsAnalyzingImage] = useState(false);
+  const [analyzingImage, setAnalyzingImage] = useState(false);
+  const [categorizing, setCategorizing] = useState(false);
+  const [enhancing, setEnhancing] = useState(false);
+  const [suggestion, setSuggestion] = useState<{category: string, confidence: number, reasoning: string} | null>(null);
   
-  // Enhanced AI features
-  const [isAiCategorizing, setIsAiCategorizing] = useState(false);
-  const [isEnhancing, setIsEnhancing] = useState(false);
-  const [aiSuggestion, setAiSuggestion] = useState<{category: string, confidence: number, reasoning: string} | null>(null);
-  
-  // Enhanced speech recognition
   const { isListening, startListening, stopListening, isSupported } = useEnhancedSpeech((transcript) => {
     setFormData(prev => ({
       ...prev,
@@ -73,7 +70,6 @@ export function CreateComplaintDialog({ open, onOpenChange, onSuccess }: CreateC
 
   const fetchCategories = async () => {
     try {
-      console.log('Fetching categories...');
       const { data, error } = await supabase.from('categories').select('*');
       
       if (error) {
@@ -82,7 +78,6 @@ export function CreateComplaintDialog({ open, onOpenChange, onSuccess }: CreateC
         return;
       }
       
-      console.log('Categories fetched successfully:', data);
       if (data) {
         setCategories(data);
       }
@@ -104,15 +99,13 @@ export function CreateComplaintDialog({ open, onOpenChange, onSuccess }: CreateC
     setImagePreview(url);
   };
 
-  // AI Image Analysis - Auto-fill form from image
-  const handleImageAnalysis = async () => {
+  const analyzeImage = async () => {
     if (!imageFile) {
       toast.error('Please upload an image first');
       return;
     }
 
-    setIsAnalyzingImage(true);
-    toast.info('Analyzing image with AI...');
+    setAnalyzingImage(true);
     
     try {
       // Convert image to base64
@@ -125,10 +118,7 @@ export function CreateComplaintDialog({ open, onOpenChange, onSuccess }: CreateC
         };
       });
 
-      console.log('Image file type:', imageFile.type);
       const analysis = await imageAnalysisService.analyzeComplaintImage(imageBase64, imageFile.type);
-      
-      console.log('Analysis result:', analysis);
       
       // Auto-fill form fields
       setFormData(prev => ({
@@ -153,18 +143,17 @@ export function CreateComplaintDialog({ open, onOpenChange, onSuccess }: CreateC
       console.error('Image analysis error:', error);
       toast.error('Image analysis failed. Check console for details.');
     } finally {
-      setIsAnalyzingImage(false);
+      setAnalyzingImage(false);
     }
   };
 
-  // AI-powered categorization
-  const handleAiCategorization = async () => {
+  const categorizeIssue = async () => {
     if (!formData.description && !imageFile) {
       toast.error('Please provide a description or image for AI categorization');
       return;
     }
 
-    setIsAiCategorizing(true);
+    setCategorizing(true);
     try {
       let imageBase64: string | undefined;
       if (imageFile) {
@@ -179,7 +168,7 @@ export function CreateComplaintDialog({ open, onOpenChange, onSuccess }: CreateC
       }
 
       const result = await categorizeIssueWithAI(formData.description, imageBase64);
-      setAiSuggestion(result);
+      setSuggestion(result);
 
       // Auto-select matching category if confidence is high
       if (result.confidence > 0.7) {
@@ -193,45 +182,37 @@ export function CreateComplaintDialog({ open, onOpenChange, onSuccess }: CreateC
         }
       }
     } catch (error) {
-      console.error('AI categorization error:', error);
-      toast.error('AI categorization failed');
+      toast.error('Failed to categorize');
     } finally {
-      setIsAiCategorizing(false);
+      setCategorizing(false);
     }
   };
 
-  // AI-powered description enhancement
-  const handleDescriptionEnhancement = async () => {
+  const enhanceDescription = async () => {
     if (!formData.description.trim()) {
       toast.error('Please enter a description first');
       return;
     }
 
-    setIsEnhancing(true);
+    setEnhancing(true);
     try {
       const enhanced = await enhanceIssueDescription(formData.description);
       if (enhanced && enhanced !== formData.description) {
         setFormData(prev => ({ ...prev, description: enhanced }));
-        toast.success('Description enhanced by AI');
+        toast.success('Description enhanced');
       } else {
-        toast.info('Description looks good as is!');
+        toast.info('Looks good!');
       }
     } catch (error) {
-      console.error('Description enhancement error:', error);
-      toast.error('Description enhancement failed');
+      toast.error('Enhancement failed');
     } finally {
-      setIsEnhancing(false);
+      setEnhancing(false);
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-
-    console.log('=== COMPLAINT SUBMISSION DEBUG ===');
-    console.log('User:', user);
-    console.log('Form data:', formData);
-    console.log('Categories loaded:', categories.length);
 
     try {
       // Check for duplicate complaints
@@ -250,7 +231,6 @@ export function CreateComplaintDialog({ open, onOpenChange, onSuccess }: CreateC
       // Upload image if present
       let imageUrls: string[] | null = null;
       if (imageFile) {
-        // Ensure a bucket named 'complaint-images' exists in your Supabase project
         const fileName = `${user?.id}/${Date.now()}_${imageFile.name}`;
         const { data: uploadData, error: uploadError } = await supabase.storage
           .from('complaint-images')
@@ -296,18 +276,6 @@ export function CreateComplaintDialog({ open, onOpenChange, onSuccess }: CreateC
       // Get department_id from selected category
       const selectedCategory = categories.find(c => c.id === formData.category_id);
       
-      console.log('About to insert complaint:', {
-        user_id: user?.id,
-        title: formData.title,
-        description: formData.description,
-        category_id: formData.category_id,
-        department_id: selectedCategory?.department_id,
-        location_lat: formData.latitude,
-        location_lng: formData.longitude,
-        location_address: formData.address,
-        image_url: imageUrls && imageUrls.length > 0 ? imageUrls[0] : null
-      });
-      
       const { data, error } = await supabase.from('complaints').insert({
         user_id: user?.id,
         title: formData.title,
@@ -319,8 +287,6 @@ export function CreateComplaintDialog({ open, onOpenChange, onSuccess }: CreateC
         location_address: formData.address,
         image_url: imageUrls && imageUrls.length > 0 ? imageUrls[0] : null, // Use first image URL
       });
-      
-      console.log('Insert result:', { data, error });
 
       if (error) {
         console.error('Supabase insert error:', error);
@@ -374,9 +340,9 @@ export function CreateComplaintDialog({ open, onOpenChange, onSuccess }: CreateC
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Label htmlFor="category">Category *</Label>
-              {aiSuggestion && (
+              {suggestion && (
                 <Badge variant="outline" className="text-xs">
-                  AI Suggestion: {aiSuggestion.category} ({Math.round(aiSuggestion.confidence * 100)}%)
+                  AI Suggestion: {suggestion.category} ({Math.round(suggestion.confidence * 100)}%)
                 </Badge>
               )}
             </div>
@@ -408,11 +374,11 @@ export function CreateComplaintDialog({ open, onOpenChange, onSuccess }: CreateC
               <Button
                 type="button"
                 variant="outline"
-                onClick={handleAiCategorization}
-                disabled={isAiCategorizing || (!formData.description && !imageFile)}
+                onClick={categorizeIssue}
+                disabled={categorizing || (!formData.description && !imageFile)}
                 className="px-3"
               >
-                {isAiCategorizing ? (
+                {categorizing ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
                   <SparklesIcon className="h-4 w-4" />
@@ -444,11 +410,11 @@ export function CreateComplaintDialog({ open, onOpenChange, onSuccess }: CreateC
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={handleDescriptionEnhancement}
-                  disabled={isEnhancing || !formData.description.trim()}
+                  onClick={enhanceDescription}
+                  disabled={enhancing || !formData.description.trim()}
                   className="px-2"
                 >
-                  {isEnhancing ? (
+                  {enhancing ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
                   ) : (
                     <EnhanceIcon className="h-4 w-4" />
@@ -492,10 +458,10 @@ export function CreateComplaintDialog({ open, onOpenChange, onSuccess }: CreateC
                         type="button"
                         variant="secondary"
                         size="sm"
-                        onClick={handleImageAnalysis}
-                        disabled={isAnalyzingImage}
+                        onClick={analyzeImage}
+                        disabled={analyzingImage}
                       >
-                        {isAnalyzingImage ? (
+                        {analyzingImage ? (
                           <>
                             <Loader2 className="h-3 w-3 mr-1 animate-spin" />
                             Analyzing...
@@ -514,7 +480,7 @@ export function CreateComplaintDialog({ open, onOpenChange, onSuccess }: CreateC
                         onClick={() => {
                           setImageFile(null);
                           setImagePreview(null);
-                          setAiSuggestion(null);
+                          setSuggestion(null);
                         }}
                       >
                         ✕
