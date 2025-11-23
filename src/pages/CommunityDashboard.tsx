@@ -71,7 +71,7 @@ export default function CommunityDashboard() {
       
       console.log('Supabase connection successful, fetching full data...');
       
-      // Fetch all public complaints
+      // Fetch all public complaints (no limit)
       const { data: complaintsData, error } = await supabase
         .from('complaints')
         .select(`
@@ -80,8 +80,7 @@ export default function CommunityDashboard() {
           departments (name),
           profiles (full_name)
         `)
-        .order('created_at', { ascending: false })
-        .limit(100);
+        .order('created_at', { ascending: false });
 
       if (error) {
         console.error('Error fetching complaints:', error);
@@ -89,6 +88,7 @@ export default function CommunityDashboard() {
       }
 
       console.log('Fetched complaints data:', complaintsData?.length || 0, 'items');
+      console.log('Complaints with coordinates:', complaintsData?.filter(c => c.latitude && c.longitude).length || 0);
       
       const complaintsList = (complaintsData || []) as CommunityComplaint[];
       setComplaints(complaintsList);
