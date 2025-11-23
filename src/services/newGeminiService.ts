@@ -1,20 +1,6 @@
-import { GoogleGenAI, GenerateContentResponse } from "@google/genai";
+import { GoogleGenAI, GenerateContentResponse, GroundingChunk } from "@google/genai";
 
-export interface GroundingChunk {
-  web?: {
-    uri?: string;
-    title?: string;
-  };
-  maps?: {
-    uri?: string;
-    title?: string;
-    placeAnswerSources?: {
-      reviewSnippets?: {
-        content?: string;
-      }[];
-    }[];
-  };
-}
+export type { GroundingChunk };
 
 export interface LocationData {
   latitude: number;
