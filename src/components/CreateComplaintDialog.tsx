@@ -18,6 +18,7 @@ import { Suspense, lazy } from 'react';
 const CityMap = lazy(() => import('./CityMap').then((m) => ({ default: m.CityMap })));
 import { toast } from 'sonner';
 import { categorizeIssueWithAI, enhanceIssueDescription } from '@/services/aiCategorization';
+import { imageAnalysisService } from '@/services/imageAnalysis';
 import { useEnhancedSpeech } from '@/hooks/useEnhancedSpeech';
 import { MicIcon, MicOffIcon, SparklesIcon, PhotoIcon, EnhanceIcon } from '@/components/icons/EnhancedIcons';
 import { Loader2 } from 'lucide-react';
@@ -49,6 +50,7 @@ export function CreateComplaintDialog({ open, onOpenChange, onSuccess }: CreateC
   });
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [isAnalyzingImage, setIsAnalyzingImage] = useState(false);
   
   // Enhanced AI features
   const [isAiCategorizing, setIsAiCategorizing] = useState(false);
@@ -100,6 +102,54 @@ export function CreateComplaintDialog({ open, onOpenChange, onSuccess }: CreateC
     setImageFile(file);
     const url = URL.createObjectURL(file);
     setImagePreview(url);
+  };
+
+  // AI Image Analysis - Auto-fill form from image
+  const handleImageAnalysis = async () => {
+    if (!imageFile) {
+      toast.error('Please upload an image first');
+      return;
+    }
+
+    setIsAnalyzingImage(true);
+    try {
+      // Convert image to base64
+      const reader = new FileReader();
+      reader.readAsDataURL(imageFile);
+      const imageBase64 = await new Promise<string>((resolve) => {
+        reader.onloadend = () => {
+          const result = reader.result as string;
+          resolve(result.split(',')[1]); // Remove data URL prefix
+        };
+      });
+
+      const analysis = await imageAnalysisService.analyzeComplaintImage(imageBase64);
+      
+      // Auto-fill form fields
+      setFormData(prev => ({
+        ...prev,
+        title: analysis.title,
+        description: analysis.description + '\n\nDetails:\n' + analysis.details.join('\n')
+      }));
+
+      // Auto-select category if found
+      const matchedCategory = categories.find(c => 
+        c.name.toLowerCase().includes(analysis.suggestedCategory.toLowerCase()) ||
+        analysis.suggestedCategory.toLowerCase().includes(c.name.toLowerCase())
+      );
+      
+      if (matchedCategory) {
+        setFormData(prev => ({ ...prev, category_id: matchedCategory.id }));
+        toast.success(`AI analyzed image: ${analysis.title} (${Math.round(analysis.confidence * 100)}% confidence)`);
+      } else {
+        toast.success('Image analyzed! Please select a category.');
+      }
+    } catch (error) {
+      console.error('Image analysis error:', error);
+      toast.error('Image analysis failed');
+    } finally {
+      setIsAnalyzingImage(false);
+    }
   };
 
   // AI-powered categorization
@@ -328,7 +378,15 @@ export function CreateComplaintDialog({ open, onOpenChange, onSuccess }: CreateC
             <div className="flex gap-2">
               <Select
                 value={formData.category_id}
-                onValueChange={(value) => setFormData({ ...formData, category_id: value })}
+                onValueChange={(value) => {
+                  setFormData({ ...formData, category_id: value });
+                  // Auto-assign department based on category
+                  const selectedCat = categories.find(c => c.id === value);
+                  if (selectedCat?.department_id) {
+                    console.log('Auto-assigning department:', selectedCat.department_id);
+                    toast.success('Department auto-assigned!');
+                  }
+                }}
                 required
               >
                 <SelectTrigger>
@@ -424,19 +482,39 @@ export function CreateComplaintDialog({ open, onOpenChange, onSuccess }: CreateC
                       alt="preview" 
                       className="w-full max-h-48 object-cover rounded-lg" 
                     />
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      size="sm"
-                      className="absolute top-2 right-2"
-                      onClick={() => {
-                        setImageFile(null);
-                        setImagePreview(null);
-                        setAiSuggestion(null);
-                      }}
-                    >
-                      ✕
-                    </Button>
+                    <div className="absolute top-2 right-2 flex gap-2">
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        size="sm"
+                        onClick={handleImageAnalysis}
+                        disabled={isAnalyzingImage}
+                      >
+                        {isAnalyzingImage ? (
+                          <>
+                            <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                            Analyzing...
+                          </>
+                        ) : (
+                          <>
+                            <SparklesIcon className="h-3 w-3 mr-1" />
+                            Analyze Image
+                          </>
+                        )}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => {
+                          setImageFile(null);
+                          setImagePreview(null);
+                          setAiSuggestion(null);
+                        }}
+                      >
+                        ✕
+                      </Button>
+                    </div>
                   </div>
                 ) : (
                   <label 
