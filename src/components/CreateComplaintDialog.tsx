@@ -112,6 +112,8 @@ export function CreateComplaintDialog({ open, onOpenChange, onSuccess }: CreateC
     }
 
     setIsAnalyzingImage(true);
+    toast.info('Analyzing image with AI...');
+    
     try {
       // Convert image to base64
       const reader = new FileReader();
@@ -123,13 +125,16 @@ export function CreateComplaintDialog({ open, onOpenChange, onSuccess }: CreateC
         };
       });
 
-      const analysis = await imageAnalysisService.analyzeComplaintImage(imageBase64);
+      console.log('Image file type:', imageFile.type);
+      const analysis = await imageAnalysisService.analyzeComplaintImage(imageBase64, imageFile.type);
+      
+      console.log('Analysis result:', analysis);
       
       // Auto-fill form fields
       setFormData(prev => ({
         ...prev,
         title: analysis.title,
-        description: analysis.description + '\n\nDetails:\n' + analysis.details.join('\n')
+        description: analysis.description + (analysis.details.length > 0 ? '\n\nDetails:\n' + analysis.details.join('\n') : '')
       }));
 
       // Auto-select category if found
@@ -146,7 +151,7 @@ export function CreateComplaintDialog({ open, onOpenChange, onSuccess }: CreateC
       }
     } catch (error) {
       console.error('Image analysis error:', error);
-      toast.error('Image analysis failed');
+      toast.error('Image analysis failed. Check console for details.');
     } finally {
       setIsAnalyzingImage(false);
     }

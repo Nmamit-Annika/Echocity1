@@ -67,11 +67,18 @@ export function CityMap({ complaints = [], onLocationSelect, center = [72.8777, 
   // Previous center prop was [lng, lat] for Mapbox; Leaflet expects [lat, lng]
   const leafletCenter: [number, number] = [center[1], center[0]];
 
-  const complaintsWithCoords = complaints.filter(c => c.latitude != null && c.longitude != null);
+  const complaintsWithCoords = complaints.filter(c => {
+    const hasCoords = c.latitude != null && c.longitude != null && !isNaN(c.latitude) && !isNaN(c.longitude);
+    if (!hasCoords && complaints.length < 10) {
+      console.log('Complaint missing coordinates:', c.title, c.latitude, c.longitude);
+    }
+    return hasCoords;
+  });
   
   console.log('🗺️ CityMap rendering:', {
     totalComplaints: complaints.length,
     withCoordinates: complaintsWithCoords.length,
+    sampleComplaint: complaintsWithCoords[0],
     center: leafletCenter
   });
 

@@ -20,12 +20,14 @@ class ImageAnalysisService {
     }
   }
 
-  async analyzeComplaintImage(imageBase64: string): Promise<ImageAnalysisResult> {
+  async analyzeComplaintImage(imageBase64: string, mimeType: string = 'image/jpeg'): Promise<ImageAnalysisResult> {
     if (!this.genAI) {
+      console.log('No Gemini API key, using mock analysis');
       return this.getMockAnalysis();
     }
 
     try {
+      // Use gemini-1.5-flash which supports vision
       const model = this.genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
       const prompt = `Analyze this civic complaint image and provide:
@@ -43,22 +45,25 @@ DESCRIPTION: [description]
 CATEGORY: [category name]
 DETAILS: [bullet points]`;
 
+      console.log('Sending image to Gemini for analysis...');
       const result = await model.generateContent([
         prompt,
         {
           inlineData: {
             data: imageBase64,
-            mimeType: 'image/jpeg'
+            mimeType: mimeType
           }
         }
       ]);
 
       const response = await result.response;
       const text = response.text();
+      console.log('Gemini vision response:', text);
 
       return this.parseResponse(text);
     } catch (error) {
       console.error('Image analysis error:', error);
+      console.error('Error details:', error instanceof Error ? error.message : error);
       return this.getMockAnalysis();
     }
   }
