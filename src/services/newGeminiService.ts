@@ -10,10 +10,11 @@ export interface LocationData {
 interface GenerateResponseParams {
   prompt: string;
   model: string;
-  history?: { role: string; parts: { text: string }[] }[];
+  history?: { role: string; parts: { text?: string; inlineData?: { mimeType: string; data: string } }[] }[];
   useSearch?: boolean;
   useMaps?: boolean;
   location?: LocationData | null;
+  image?: { data: string; mimeType: string } | null;
 }
 
 const getApiKey = (): string => {
@@ -29,7 +30,8 @@ export const sendMessageToGemini = async ({
   history = [],
   useSearch = false,
   useMaps = false,
-  location
+  location,
+  image
 }: GenerateResponseParams): Promise<{ text: string; groundingChunks?: GroundingChunk[] }> => {
   
   const apiKey = getApiKey();
@@ -48,7 +50,7 @@ export const sendMessageToGemini = async ({
   }
 
   const config: any = {
-    systemInstruction: "You are Echo, a knowledgeable civic assistant for Indian cities. Help users find information about their local area, civic issues, government policies, and locate amenities or offices. When users ask about locations, use Google Maps. When users ask about current events or regulations, use Google Search. Be concise, polite, and accurate. Format responses in Markdown.",
+    systemInstruction: "You are Echo, a knowledgeable civic assistant for Indian cities. Help users find information about their local area, civic issues, government policies, and locate amenities or offices.\n\n**AI Categorization & Analysis:**\nIf the user provides an image or describes a civic issue (like a pothole, graffiti, trash, infrastructure damage, etc.):\n1. Analyze the visual or textual details carefully.\n2. Start your response with a bold category tag, e.g., **[Category: Infrastructure]** or **[Category: Sanitation]**.\n3. Provide specific advice on how to report or resolve the issue.\n\nWhen users ask about locations, use Google Maps. When users ask about current events or regulations, use Google Search. Be concise, polite, and accurate. Format responses in Markdown.",
   };
 
   if (tools.length > 0) {
@@ -66,6 +68,21 @@ export const sendMessageToGemini = async ({
     };
   }
 
+  const currentUserParts: any[] = [];
+  
+  if (image) {
+    currentUserParts.push({
+      inlineData: {
+        mimeType: image.mimeType,
+        data: image.data
+      }
+    });
+  }
+  
+  if (prompt) {
+    currentUserParts.push({ text: prompt });
+  }
+
   const contents = [
     ...history.map(msg => ({
       role: msg.role,
@@ -73,7 +90,7 @@ export const sendMessageToGemini = async ({
     })),
     {
       role: 'user',
-      parts: [{ text: prompt }]
+      parts: currentUserParts
     }
   ];
 

@@ -15,7 +15,11 @@ import {
   Map,
   Search as SearchIcon,
   AlertCircle,
-  Info
+  Info,
+  Camera,
+  Mic,
+  X,
+  Image as ImageIcon
 } from 'lucide-react';
 import { sendMessageToGemini, GroundingChunk, LocationData } from '@/services/newGeminiService';
 
@@ -26,6 +30,10 @@ interface ChatMessage {
   timestamp: number;
   isError?: boolean;
   groundingChunks?: GroundingChunk[];
+  attachment?: {
+    data: string;
+    mimeType: string;
+  };
 }
 
 interface GeminiChatbotProps {
@@ -36,7 +44,7 @@ export function NewGeminiChatbot({ complaints = [] }: GeminiChatbotProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: 'welcome',
-      text: "Hello! I'm Echo, your Civic Assistant. I can help you find local government offices, parks, emergency services, and answer questions about civic issues or policies.\n\nTry asking: **\"Where is the nearest post office?\"** or **\"What are the recycling rules here?\"**",
+      text: "Hello! I'm Echo, your Civic Assistant. I can help you find local government offices, parks, emergency services, and answer questions about civic issues or policies.\n\nYou can also **upload images** of civic issues like potholes or graffiti, and I'll help categorize them!\n\nTry asking: **\"Where is the nearest post office?\"** or upload a photo of a local issue.",
       sender: 'model',
       timestamp: Date.now()
     }
@@ -48,10 +56,39 @@ export function NewGeminiChatbot({ complaints = [] }: GeminiChatbotProps) {
   
   const [useSearch, setUseSearch] = useState(true);
   const [useMaps, setUseMaps] = useState(true);
-  const [model] = useState('gemini-2.5-flash');
+  const [model, setModel] = useState('gemini-2.5-flash');
+
+  const [selectedImage, setSelectedImage] = useState<{ data: string; mimeType: string } | null>(null);
+  const [isListening, setIsListening] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const recognitionRef = useRef<any>(null);
+
+  useEffect(() => {
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      recognitionRef.current = new SpeechRecognition();
+      recognitionRef.current.continuous = false;
+      recognitionRef.current.interimResults = false;
+      
+      recognitionRef.current.onresult = (event: any) => {
+        const transcript = event.results[0][0].transcript;
+        setInput(prev => prev + (prev ? ' ' : '') + transcript);
+        setIsListening(false);
+      };
+
+      recognitionRef.current.onerror = (event: any) => {
+        console.error("Speech error:", event.error);
+        setIsListening(false);
+      };
+      
+      recognitionRef.current.onend = () => {
+        setIsListening(false);
+      };
+    }
+  }, []);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -77,6 +114,41 @@ export function NewGeminiChatbot({ complaints = [] }: GeminiChatbotProps) {
     }
   }, []);
 
+  const toggleListening = () => {
+    if (!recognitionRef.current) {
+      alert("Speech recognition not supported in this browser.");
+      return;
+    }
+    
+    if (isListening) {
+      recognitionRef.current.stop();
+    } else {
+      recognitionRef.current.start();
+      setIsListening(true);
+    }
+  };
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      alert('Please upload an image file');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const base64 = reader.result as string;
+      const base64Data = base64.split(',')[1];
+      setSelectedImage({
+        data: base64Data,
+        mimeType: file.type
+      });
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
 
@@ -84,11 +156,14 @@ export function NewGeminiChatbot({ complaints = [] }: GeminiChatbotProps) {
       id: Date.now().toString(),
       text: input,
       sender: 'user',
-      timestamp: Date.now()
+      timestamp: Date.now(),
+      attachment: selectedImage ? { ...selectedImage } : undefined
     };
 
     setMessages(prev => [...prev, userMsg]);
     setInput('');
+    const currentImage = selectedImage;
+    setSelectedImage(null);
     setIsLoading(true);
 
     try {
@@ -103,7 +178,8 @@ export function NewGeminiChatbot({ complaints = [] }: GeminiChatbotProps) {
         history: history,
         useSearch: useSearch,
         useMaps: useMaps,
-        location: location
+        location: location,
+        image: currentImage
       });
 
       const botMsg: ChatMessage = {
@@ -186,6 +262,16 @@ export function NewGeminiChatbot({ complaints = [] }: GeminiChatbotProps) {
               ? 'bg-indigo-600 text-white rounded-tr-none' 
               : 'bg-white border border-slate-200 text-slate-800 rounded-tl-none'
           }`}>
+            {msg.attachment && (
+              <div className="mb-3 rounded-lg overflow-hidden bg-black/5">
+                <img 
+                  src={`data:${msg.attachment.mimeType};base64,${msg.attachment.data}`}
+                  alt="User upload" 
+                  className="max-w-full h-auto max-h-60 object-cover"
+                />
+              </div>
+            )}
+
             {msg.isError ? (
               <div className="flex items-center gap-2 text-red-600">
                 <AlertCircle className="w-4 h-4" />
@@ -286,6 +372,15 @@ export function NewGeminiChatbot({ complaints = [] }: GeminiChatbotProps) {
                 <SearchIcon className="w-3 h-3 mr-1" />
                 Search {useSearch ? 'On' : 'Off'}
               </Button>
+
+              <select 
+                value={model} 
+                onChange={(e) => setModel(e.target.value)}
+                className="text-xs border border-slate-300 rounded px-2 py-1 bg-white"
+              >
+                <option value="gemini-2.5-flash">Flash (Fast)</option>
+                <option value="gemini-3-pro-preview">Pro (Better)</option>
+              </select>
             </div>
 
             {locationError && (
@@ -296,7 +391,48 @@ export function NewGeminiChatbot({ complaints = [] }: GeminiChatbotProps) {
             )}
           </div>
 
+          {selectedImage && (
+            <div className="flex items-center gap-2 p-2 bg-blue-50 border border-blue-200 rounded-lg">
+              <ImageIcon className="w-4 h-4 text-blue-600" />
+              <span className="text-xs text-blue-800 flex-1">Image attached</span>
+              <button 
+                onClick={() => setSelectedImage(null)}
+                className="text-blue-600 hover:text-blue-800"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+
           <div className="flex items-end gap-2">
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleImageUpload}
+              accept="image/*"
+              className="hidden"
+            />
+            
+            <Button
+              size="icon"
+              variant="outline"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isLoading}
+              title="Upload image"
+            >
+              <Camera className="w-4 h-4" />
+            </Button>
+
+            <Button
+              size="icon"
+              variant={isListening ? "default" : "outline"}
+              onClick={toggleListening}
+              disabled={isLoading}
+              title="Voice input"
+            >
+              <Mic className={`w-4 h-4 ${isListening ? 'animate-pulse' : ''}`} />
+            </Button>
+
             <Input
               value={input}
               onChange={(e) => setInput(e.target.value)}
