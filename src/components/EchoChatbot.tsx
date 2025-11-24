@@ -18,6 +18,30 @@ import ReactMarkdown from 'react-markdown';
 const STORAGE_KEY = 'echo_corner_chat_history';
 const MAX_STORED_MESSAGES = 30;
 
+const loadMessagesFromStorage = (): ChatMessage[] | null => {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (!stored) return null;
+    const parsed = JSON.parse(stored);
+    return parsed.map((msg: any) => ({
+      ...msg,
+      timestamp: new Date(msg.timestamp)
+    }));
+  } catch (error) {
+    console.error('Failed to load messages:', error);
+    return null;
+  }
+};
+
+const saveMessagesToStorage = (messages: ChatMessage[]) => {
+  try {
+    const toStore = messages.slice(-MAX_STORED_MESSAGES);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(toStore));
+  } catch (error) {
+    console.error('Failed to save messages:', error);
+  }
+};
+
 interface ChatMessage {
   id: number;
   text: string;
