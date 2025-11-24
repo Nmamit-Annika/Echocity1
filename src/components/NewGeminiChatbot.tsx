@@ -20,10 +20,36 @@ import {
   Mic,
   X,
   Image as ImageIcon,
-  FileText
+  FileText,
+  Trash2
 } from 'lucide-react';
 import { sendMessageToGemini, GroundingChunk, LocationData } from '@/services/newGeminiService';
 import { complaintExtractor } from '@/services/complaintExtractor';
+
+const STORAGE_KEY = 'echocity_chat_history';
+const MAX_STORED_MESSAGES = 50; // Limit to prevent localStorage overflow
+
+const saveMessagesToStorage = (messages: ChatMessage[]) => {
+  try {
+    // Keep only the last MAX_STORED_MESSAGES
+    const messagesToSave = messages.slice(-MAX_STORED_MESSAGES);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(messagesToSave));
+  } catch (error) {
+    console.error('Failed to save chat history:', error);
+  }
+};
+
+const loadMessagesFromStorage = (): ChatMessage[] | null => {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) {
+      return JSON.parse(stored);
+    }
+  } catch (error) {
+    console.error('Failed to load chat history:', error);
+  }
+  return null;
+};
 
 interface ChatMessage {
   id: string;
@@ -50,14 +76,17 @@ interface GeminiChatbotProps {
 }
 
 export function NewGeminiChatbot({ complaints = [], onFileComplaint }: GeminiChatbotProps) {
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      id: 'welcome',
-      text: "Hello! I'm Echo, your Civic Assistant. I can help you find local government offices, parks, emergency services, and answer questions about civic issues or policies.\n\nYou can also **upload images** of civic issues like potholes or graffiti, and I'll help categorize them!\n\nTry asking: **\"Where is the nearest post office?\"** or upload a photo of a local issue.",
-      sender: 'model',
-      timestamp: Date.now()
-    }
-  ]);
+  const welcomeMessage: ChatMessage = {
+    id: 'welcome',
+    text: "Hello! I'm Echo, your Civic Assistant. I can help you find local government offices, parks, emergency services, and answer questions about civic issues or policies.\n\nYou can also **upload images** of civic issues like potholes or graffiti, and I'll help categorize them!\n\nTry asking: **\"Where is the nearest post office?\"** or upload a photo of a local issue.",
+    sender: 'model',
+    timestamp: Date.now()
+  };
+
+  const [messages, setMessages] = useState<ChatMessage[]>(() => {
+    const savedMessages = loadMessagesFromStorage();
+    return savedMessages && savedMessages.length > 0 ? savedMessages : [welcomeMessage];
+  });
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [location, setLocation] = useState<LocationData | null>(null);
@@ -98,6 +127,11 @@ export function NewGeminiChatbot({ complaints = [], onFileComplaint }: GeminiCha
       };
     }
   }, []);
+
+  // Save messages to localStorage whenever they change
+  useEffect(() => {
+    saveMessagesToStorage(messages);
+  }, [messages]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -230,6 +264,19 @@ export function NewGeminiChatbot({ complaints = [], onFileComplaint }: GeminiCha
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSend();
+    }
+  };
+
+  const clearHistory = () => {
+    if (confirm('Are you sure you want to clear all chat history?')) {
+      const welcomeMessage: ChatMessage = {
+        id: 'welcome-' + Date.now(),
+        text: "Hello! I'm Echo, your Civic Assistant. I can help you find local government offices, parks, emergency services, and answer questions about civic issues or policies.\n\nYou can also **upload images** of civic issues like potholes or graffiti, and I'll help categorize them!\n\nTry asking: **\"Where is the nearest post office?\"** or upload a photo of a local issue.",
+        sender: 'model',
+        timestamp: Date.now()
+      };
+      setMessages([welcomeMessage]);
+      localStorage.removeItem(STORAGE_KEY);
     }
   };
 
@@ -427,6 +474,17 @@ export function NewGeminiChatbot({ complaints = [], onFileComplaint }: GeminiCha
                 <option value="gemini-2.5-flash">Flash (Fast)</option>
                 <option value="gemini-3-pro-preview">Pro (Better)</option>
               </select>
+
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={clearHistory}
+                className="text-xs text-red-600 hover:text-red-700 hover:bg-red-50"
+                title="Clear chat history"
+              >
+                <Trash2 className="w-3 h-3 mr-1" />
+                Clear
+              </Button>
             </div>
 
             {locationError && (
