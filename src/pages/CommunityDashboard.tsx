@@ -21,9 +21,9 @@ interface CommunityComplaint {
   status: string;
   priority: string;
   created_at: string;
-  address: string;
-  latitude: number;
-  longitude: number;
+  location_address: string;
+  location_lat: number;
+  location_lng: number;
   image_urls: string[] | null;
   categories: {
     name: string;
@@ -110,7 +110,12 @@ export default function CommunityDashboard() {
       }
 
       console.log('Fetched complaints data:', complaintsData?.length || 0, 'items');
-      console.log('Complaints with coordinates:', complaintsData?.filter(c => c.latitude && c.longitude).length || 0);
+      console.log('Complaints with coordinates:', complaintsData?.filter(c => c.location_lat && c.location_lng).length || 0);
+      console.log('Sample complaint coords:', complaintsData?.[0] ? {
+        title: complaintsData[0].title,
+        lat: complaintsData[0].location_lat,
+        lng: complaintsData[0].location_lng
+      } : 'No data');
       
       const complaintsList = (complaintsData || []) as CommunityComplaint[];
       setComplaints(complaintsList);
@@ -324,7 +329,12 @@ export default function CommunityDashboard() {
               <CardContent>
                 <div className="h-[600px] rounded-lg overflow-hidden">
                   <CityMap 
-                    complaints={complaints} 
+                    complaints={complaints.map(c => ({
+                      ...c,
+                      latitude: c.location_lat,
+                      longitude: c.location_lng,
+                      address: c.location_address
+                    }))}
                     center={[72.8777, 19.0760]}
                   />
                 </div>
@@ -342,7 +352,10 @@ export default function CommunityDashboard() {
                   {complaints.slice(0, 20).map((complaint) => (
                     <ComplaintCard
                       key={complaint.id}
-                      complaint={complaint}
+                      complaint={{
+                        ...complaint,
+                        address: complaint.location_address
+                      }}
                       showUserInfo={true}
                     />
                   ))}

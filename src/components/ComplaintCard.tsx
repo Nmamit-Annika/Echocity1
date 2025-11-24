@@ -12,7 +12,8 @@ interface ComplaintCardProps {
     status: string;
     priority: string;
     created_at: string;
-    address: string;
+    location_address?: string;
+    address?: string; // Support both for backwards compatibility
     image_urls: string[] | null;
     categories: {
       name: string;
@@ -92,7 +93,7 @@ export function ComplaintCard({ complaint, onStatusUpdate, isAdmin, showUserInfo
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
           <div className="flex items-center gap-2">
             <MapPin className="h-4 w-4 text-muted-foreground" />
-            <span className="text-muted-foreground">{complaint.address}</span>
+            <span className="text-muted-foreground">{complaint.location_address || complaint.address || 'No address'}</span>
           </div>
           <div className="flex items-center gap-2">
             <Building className="h-4 w-4 text-muted-foreground" />
