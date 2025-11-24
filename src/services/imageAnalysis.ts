@@ -24,20 +24,23 @@ class ImageAnalysisService {
     try {
       const ai = new GoogleGenAI({ apiKey: this.apiKey });
 
-      const prompt = `Analyze this civic complaint image and provide:
+      const prompt = `You are a civic issue analyzer. Analyze this image and provide a structured analysis for a municipal complaint system.
 
-1. A clear, concise TITLE (5-10 words) describing the issue
-2. A detailed DESCRIPTION (2-3 sentences) of what you see
-3. The most appropriate CATEGORY from: Infrastructure, Waste Management, Traffic, Public Safety, Water Supply, Electricity, Street Lighting, Parks & Recreation, Noise Pollution, Health & Sanitation
-4. SPECIFIC DETAILS about the issue (location markers, severity, urgency)
+**AI Categorization & Analysis:**
+1. Carefully examine the image for civic/infrastructure issues (potholes, garbage, broken lights, damaged roads, etc.)
+2. Start with a bold category tag: **[Category: Infrastructure]** or **[Category: Sanitation]** etc.
+3. Provide specific, actionable details about severity, location markers, and urgency.
 
-Focus on civic/municipal issues. Be specific and actionable.
+Provide analysis in this format:
+TITLE: [5-10 word clear title]
+DESCRIPTION: [2-3 sentences describing the issue, severity, and visible conditions]
+CATEGORY: [One of: Infrastructure, Waste Management, Traffic, Public Safety, Water Supply, Electricity, Street Lighting, Parks & Recreation, Noise Pollution, Health & Sanitation]
+DETAILS: 
+- [Specific detail 1]
+- [Specific detail 2]
+- [Urgency/severity assessment]
 
-Format your response as:
-TITLE: [title]
-DESCRIPTION: [description]
-CATEGORY: [category name]
-DETAILS: [bullet points]`;
+Be precise, professional, and focus on actionable information for city officials.`;
 
       const result = await ai.models.generateContent({
         model: 'gemini-2.5-flash',
@@ -71,13 +74,19 @@ DETAILS: [bullet points]`;
     let category = '';
     const details: string[] = [];
 
+    // Extract category tag if present (e.g., **[Category: Infrastructure]**)
+    const categoryTagMatch = text.match(/\*\*\[Category:\s*([^\]]+)\]\*\*/i);
+    if (categoryTagMatch) {
+      category = categoryTagMatch[1].trim();
+    }
+
     for (const line of lines) {
       if (line.startsWith('TITLE:')) {
         title = line.replace('TITLE:', '').trim();
       } else if (line.startsWith('DESCRIPTION:')) {
         description = line.replace('DESCRIPTION:', '').trim();
       } else if (line.startsWith('CATEGORY:')) {
-        category = line.replace('CATEGORY:', '').trim();
+        category = category || line.replace('CATEGORY:', '').trim();
       } else if (line.startsWith('DETAILS:')) {
         // Skip the header
       } else if (line.trim().startsWith('-') || line.trim().startsWith('•')) {
@@ -93,11 +102,17 @@ DETAILS: [bullet points]`;
       category = category || 'Infrastructure';
     }
 
+    // Calculate confidence based on how complete the analysis is
+    let confidence = 0.70;
+    if (title && description && category && details.length > 0) confidence = 0.95;
+    else if (title && description && category) confidence = 0.85;
+    else if (title && description) confidence = 0.75;
+
     return {
       title,
       description,
       suggestedCategory: category,
-      confidence: 0.85,
+      confidence,
       details
     };
   }
