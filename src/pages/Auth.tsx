@@ -24,7 +24,10 @@ const Auth = () => {
     // Check if user is already signed in
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
-        navigate('/app');
+        // Check for returnTo parameter
+        const params = new URLSearchParams(window.location.search);
+        const returnTo = params.get('returnTo');
+        navigate(returnTo || '/app');
       }
     });
   }, [navigate]);
@@ -49,7 +52,10 @@ const Auth = () => {
         }
       } else {
         toast.success('Welcome back!');
-        navigate('/app');
+        // Check for returnTo parameter
+        const params = new URLSearchParams(window.location.search);
+        const returnTo = params.get('returnTo');
+        navigate(returnTo || '/app');
       }
     } catch (error: any) {
       console.error('Auth error:', error);

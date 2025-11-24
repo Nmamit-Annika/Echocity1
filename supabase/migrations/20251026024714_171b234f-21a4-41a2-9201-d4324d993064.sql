@@ -220,4 +220,6 @@ SELECT 'Parking Issues', 'Illegal parking and violations', 'ParkingCircle', d.id
 UNION ALL
 SELECT 'Public Safety', 'Unsafe areas and broken infrastructure', 'Shield', d.id FROM public.departments d WHERE d.name = 'Municipal Corporation'
 UNION ALL
-SELECT 'Noise Pollution', 'Excessive noise complaints', 'Volume2', d.id FROM public.departments d WHERE d.name = 'Environment Department';
+SELECT 'Noise Pollution', 'Excessive noise complaints', 'Volume2', d.id FROM public.departments d WHERE d.name = 'Environment Department'
+UNION ALL
+SELECT 'Infrastructure', 'Building infrastructure issues and maintenance', 'Building2', d.id FROM public.departments d WHERE d.name = 'Public Works Department';

@@ -50,6 +50,7 @@ export function CreateComplaintDialog({ open, onOpenChange, onSuccess }: CreateC
   });
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [aiImageData, setAiImageData] = useState<{ data: string; mimeType: string } | null>(null);
   const [analyzingImage, setAnalyzingImage] = useState(false);
   const [categorizing, setCategorizing] = useState(false);
   const [enhancing, setEnhancing] = useState(false);
@@ -65,6 +66,36 @@ export function CreateComplaintDialog({ open, onOpenChange, onSuccess }: CreateC
   useEffect(() => {
     if (open) {
       fetchCategories();
+      
+      // Check for AI-detected complaint data
+      const aiData = sessionStorage.getItem('aiComplaintData');
+      if (aiData) {
+        try {
+          const parsedData = JSON.parse(aiData);
+          setFormData(prev => ({
+            ...prev,
+            title: parsedData.title || '',
+            description: parsedData.description || ''
+          }));
+          
+          // If there's image data from AI
+          if (parsedData.imageData) {
+            // Convert base64 back to file for preview
+            const base64Data = parsedData.imageData.data;
+            const mimeType = parsedData.imageData.mimeType;
+            setImagePreview(`data:${mimeType};base64,${base64Data}`);
+            
+            // Store for later use in submission
+            setAiImageData(parsedData.imageData);
+          }
+          
+          toast.success('AI detected complaint details loaded!');
+          // Clear the data after loading
+          sessionStorage.removeItem('aiComplaintData');
+        } catch (error) {
+          console.error('Error parsing AI complaint data:', error);
+        }
+      }
     }
   }, [open]);
 

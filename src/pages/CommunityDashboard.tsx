@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { MapPin, Users, TrendingUp, Calendar } from 'lucide-react';
 import { ComplaintCard } from '@/components/ComplaintCard';
 import { NewGeminiChatbot } from '@/components/NewGeminiChatbot';
+import { CreateComplaintDialog } from '@/components/CreateComplaintDialog';
 import { CityMap } from '@/components/CityMap';
 import { debugUrls } from '@/utils/urlUtils';
 import { toast } from 'sonner';
@@ -53,19 +54,20 @@ export default function CommunityDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('map');
+  const [showComplaintDialog, setShowComplaintDialog] = useState(false);
 
   const handleFileComplaint = (data: { title: string; description: string; category: string; imageData?: { data: string; mimeType: string } }) => {
     // Store complaint data in sessionStorage
     sessionStorage.setItem('aiComplaintData', JSON.stringify(data));
     
     if (user) {
-      // User is logged in, go to home page with complaint dialog
-      toast.success('Redirecting to file complaint...');
-      navigate('/?openComplaint=true');
+      // User is logged in, open dialog directly on this page
+      toast.success('Opening complaint form...');
+      setShowComplaintDialog(true);
     } else {
       // User not logged in, redirect to auth with return URL
       toast.info('Please sign in to file a complaint');
-      navigate('/auth?returnTo=/?openComplaint=true');
+      navigate('/auth?returnTo=/community');
     }
   };
 
@@ -356,6 +358,16 @@ export default function CommunityDashboard() {
           </TabsContent>
         </Tabs>
       </div>
+      
+      {/* Complaint Dialog */}
+      <CreateComplaintDialog
+        open={showComplaintDialog}
+        onOpenChange={setShowComplaintDialog}
+        onSuccess={() => {
+          setShowComplaintDialog(false);
+          fetchCommunityData(); // Refresh complaints after successful submission
+        }}
+      />
     </div>
   );
 }
