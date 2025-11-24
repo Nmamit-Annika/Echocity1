@@ -12,23 +12,6 @@ dist
 dist-ssr
 *.local
 
-# Environment files
-.env
-.env.local
-.env.production
-.env.*.local
-
-# Database and SQL files
-*.sql
-
-# Test files
-test-*.js
-
-# Build artifacts
-bun.lockb
-vercel.json
-server/
-
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

@@ -17,12 +17,20 @@ export default function Cover() {
           <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/80">
             Echocity
           </span>
-          <Link
-            to="/auth"
-            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-primary hover:text-primary/80 transition-colors"
-          >
-            Sign in
-          </Link>
+          <div className="flex items-center gap-4">
+            <Link
+              to="/community"
+              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-600 hover:text-primary transition-colors"
+            >
+              Community
+            </Link>
+            <Link
+              to="/auth"
+              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-primary hover:text-primary/80 transition-colors"
+            >
+              Sign in
+            </Link>
+          </div>
         </div>
       </nav>
 
@@ -59,10 +67,10 @@ export default function Cover() {
                 </svg>
               </Link>
               <Link
-                to="/auth"
+                to="/community"
                 className="inline-flex items-center justify-center gap-3 border-2 border-primary/10 bg-white/50 backdrop-blur-sm text-primary px-8 py-4 rounded-xl hover:border-primary/30 hover:bg-white/80 transition-all duration-200"
               >
-                Learn more
+                View Community
               </Link>
             </div>
 

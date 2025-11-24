@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -46,6 +47,7 @@ interface DashboardStats {
 
 export default function CommunityDashboard() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [complaints, setComplaints] = useState<CommunityComplaint[]>([]);
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -53,10 +55,18 @@ export default function CommunityDashboard() {
   const [activeTab, setActiveTab] = useState('map');
 
   const handleFileComplaint = (data: { title: string; description: string; category: string; imageData?: { data: string; mimeType: string } }) => {
-    // Store complaint data in sessionStorage and navigate to home
+    // Store complaint data in sessionStorage
     sessionStorage.setItem('aiComplaintData', JSON.stringify(data));
-    toast.success('Redirecting to file complaint...');
-    navigate('/?openComplaint=true');
+    
+    if (user) {
+      // User is logged in, go to home page with complaint dialog
+      toast.success('Redirecting to file complaint...');
+      navigate('/?openComplaint=true');
+    } else {
+      // User not logged in, redirect to auth with return URL
+      toast.info('Please sign in to file a complaint');
+      navigate('/auth?returnTo=/?openComplaint=true');
+    }
   };
 
   useEffect(() => {

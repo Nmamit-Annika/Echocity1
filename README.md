@@ -1,76 +1,20 @@
-# EchoCity - Community Civic Dashboard with AI Assistant
+<div align="center">
+<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
+</div>
 
-A modern civic engagement platform that allows citizens to report community issues, track complaint status, and get AI-powered assistance for civic matters.
-visit: https://nmamit-annika.github.io/Echocity1/
+# Run and deploy your AI Studio app
 
-## ✨ Features
+This contains everything you need to run your app locally.
 
-- **Community Dashboard**: View and analyze all public complaints
-- **Interactive Map**: Visual complaint tracking with location markers
-- **AI Chatbot Assistant**: Get help with civic issues, pincode lookup, and authority contacts
-- **Voice Recognition**: Talk to the AI assistant using speech-to-text
-- **Real-time Analytics**: Community insights and complaint trends
-- **Mobile-Responsive**: Works seamlessly on all devices
+View your app in AI Studio: https://ai.studio/apps/drive/13e_ZlC07N7sW25zBsTO8TOJ7m_WR4LFW
 
-## 🤖 AI Assistant Features
+## Run Locally
 
-The integrated Echo chatbot (powered by Gemini AI) can help with:
-
-🏛️ **Citizen Services:**
-- Find nearest police stations, hospitals, government offices
-- Emergency contacts and helpline numbers
-- Authority contact information and office hours
-- Government service procedures and requirements
-
-🔧 **Government Services:**
-- Birth certificate, passport, and document procedures
-- Property tax and utility bill guidance
-- License and permit applications
-- Complaint filing and tracking assistance
-
-📍 **Location Services:**
-- Pincode lookup and area information
-- Directions to civic facilities
-- Emergency service locations
-- Local authority contacts
-
-📊 **Community Insights:**
-- Filing complaints and reporting civic issues
-- Analyzing complaint patterns and trends
-- Providing guidance on municipal services
-- Speech recognition for hands-free interaction
+**Prerequisites:**  Node.js
 
 
-
-## 🛠️ Technologies Used
-
-- **Frontend**: React 18 + TypeScript + Vite
-- **UI Components**: Shadcn/ui + Tailwind CSS  
-- **Backend**: Supabase (Database + Authentication)
-- **AI Integration**: Google Gemini API
-- **Maps**: React Leaflet + OpenStreetMap
-- **Speech**: Web Speech API (SpeechRecognition + SpeechSynthesis)
-- **State Management**: TanStack Query (React Query)
-
-### Important Notes:
-- The AI chatbot requires a valid Gemini API key to function properly
-- Speech recognition works best on HTTPS (required for production)
-- Location services need user permission for precise pincode lookup
-
-## 📱 Usage
-
-1. **Browse Community Issues**: Visit the community dashboard to see reported complaints
-2. **Chat with AI**: Click the chat bubble to open Echo, your AI civic assistant  
-3. **Voice Interaction**: Use the microphone button to speak with the assistant
-4. **File Complaints**: Create new complaints with photos and location
-5. **Get Help**: Ask the AI about pincodes, authorities, or civic processes
-
-## 🔍 Chatbot Capabilities
-
-The Echo AI assistant can:
-- **Answer Civic Questions**: Get information about municipal services and processes
-- **Pincode Lookup**: Find area codes and authority contact information
-- **Location Services**: Get relevant information based on your location  
-- **Complaint Guidance**: Help you file complaints effectively
-- **Voice Interaction**: Supports both text and speech input/output
-
+1. Install dependencies:
+   `npm install`
+2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
+3. Run the app:
+   `npm run dev`
