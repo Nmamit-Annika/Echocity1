@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,6 +10,7 @@ import { ComplaintCard } from '@/components/ComplaintCard';
 import { NewGeminiChatbot } from '@/components/NewGeminiChatbot';
 import { CityMap } from '@/components/CityMap';
 import { debugUrls } from '@/utils/urlUtils';
+import { toast } from 'sonner';
 
 interface CommunityComplaint {
   id: string;
@@ -43,11 +45,19 @@ interface DashboardStats {
 }
 
 export default function CommunityDashboard() {
+  const navigate = useNavigate();
   const [complaints, setComplaints] = useState<CommunityComplaint[]>([]);
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('map');
+
+  const handleFileComplaint = (data: { title: string; description: string; category: string; imageData?: { data: string; mimeType: string } }) => {
+    // Store complaint data in sessionStorage and navigate to home
+    sessionStorage.setItem('aiComplaintData', JSON.stringify(data));
+    toast.success('Redirecting to file complaint...');
+    navigate('/?openComplaint=true');
+  };
 
   useEffect(() => {
     debugUrls();
@@ -331,7 +341,7 @@ export default function CommunityDashboard() {
 
           <TabsContent value="ai" className="mt-6">
             <div className="h-[700px]">
-              <NewGeminiChatbot complaints={complaints} />
+              <NewGeminiChatbot complaints={complaints} onFileComplaint={handleFileComplaint} />
             </div>
           </TabsContent>
         </Tabs>

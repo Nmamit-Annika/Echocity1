@@ -51,6 +51,16 @@ const Index = () => {
     }
   }, [user]);
 
+  // Check for AI complaint data from chatbot
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('openComplaint') === 'true') {
+      setShowDialog(true);
+      // Clear the URL parameter
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, []);
+
   const fetchComplaints = async () => {
     console.log('📋 Fetching complaints for user:', user?.id);
     

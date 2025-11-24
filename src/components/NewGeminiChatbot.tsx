@@ -19,9 +19,11 @@ import {
   Camera,
   Mic,
   X,
-  Image as ImageIcon
+  Image as ImageIcon,
+  FileText
 } from 'lucide-react';
 import { sendMessageToGemini, GroundingChunk, LocationData } from '@/services/newGeminiService';
+import { complaintExtractor } from '@/services/complaintExtractor';
 
 interface ChatMessage {
   id: string;
@@ -34,13 +36,20 @@ interface ChatMessage {
     data: string;
     mimeType: string;
   };
+  detectedComplaint?: {
+    title: string;
+    description: string;
+    category: string;
+    severity: string;
+  };
 }
 
 interface GeminiChatbotProps {
   complaints?: any[];
+  onFileComplaint?: (data: { title: string; description: string; category: string; imageData?: { data: string; mimeType: string } }) => void;
 }
 
-export function NewGeminiChatbot({ complaints = [] }: GeminiChatbotProps) {
+export function NewGeminiChatbot({ complaints = [], onFileComplaint }: GeminiChatbotProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: 'welcome',
@@ -167,6 +176,12 @@ export function NewGeminiChatbot({ complaints = [] }: GeminiChatbotProps) {
     setIsLoading(true);
 
     try {
+      // Check if message contains a complaint
+      const complaintCheck = await complaintExtractor.extractComplaint(
+        userMsg.text,
+        currentImage || undefined
+      );
+
       const history = messages.map(m => ({
         role: m.sender === 'user' ? 'user' : 'model',
         parts: [{ text: m.text }]
@@ -187,7 +202,13 @@ export function NewGeminiChatbot({ complaints = [] }: GeminiChatbotProps) {
         text: response.text,
         sender: 'model',
         timestamp: Date.now(),
-        groundingChunks: response.groundingChunks
+        groundingChunks: response.groundingChunks,
+        detectedComplaint: complaintCheck.isComplaint && complaintCheck.confidence > 0.7 ? {
+          title: complaintCheck.title,
+          description: complaintCheck.description,
+          category: complaintCheck.category,
+          severity: complaintCheck.severity
+        } : undefined
       };
 
       setMessages(prev => [...prev, botMsg]);
@@ -291,6 +312,31 @@ export function NewGeminiChatbot({ complaints = [] }: GeminiChatbotProps) {
                 <div className="flex flex-wrap gap-2">
                   {msg.groundingChunks.map((chunk, idx) => renderGroundingSource(chunk, idx))}
                 </div>
+              </div>
+            )}
+
+            {!isUser && msg.detectedComplaint && onFileComplaint && (
+              <div className="mt-3 pt-3 border-t border-amber-200 bg-amber-50/50 -mx-3 -mb-3 px-3 pb-3 rounded-b-2xl">
+                <p className="text-[10px] uppercase tracking-wider font-semibold text-amber-700 mb-2 flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" />
+                  Complaint Detected
+                </p>
+                <p className="text-xs text-amber-800 mb-2">
+                  <strong>{msg.detectedComplaint.title}</strong> ({msg.detectedComplaint.category})
+                </p>
+                <Button
+                  size="sm"
+                  onClick={() => onFileComplaint({
+                    title: msg.detectedComplaint!.title,
+                    description: msg.detectedComplaint!.description,
+                    category: msg.detectedComplaint!.category,
+                    imageData: messages.find(m => m.id === msg.id)?.attachment
+                  })}
+                  className="w-full bg-amber-600 hover:bg-amber-700 text-white text-xs"
+                >
+                  <FileText className="w-3 h-3 mr-1" />
+                  File This Complaint
+                </Button>
               </div>
             )}
 
