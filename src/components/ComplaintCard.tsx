@@ -35,8 +35,10 @@ const statusColors = {
   pending: 'bg-warning text-warning-foreground',
   approved: 'bg-primary text-primary-foreground',
   in_progress: 'bg-primary text-primary-foreground',
+  'pending-verification': 'bg-purple-500 text-white',
   resolved: 'bg-accent text-accent-foreground',
   rejected: 'bg-destructive text-destructive-foreground',
+  reopened: 'bg-orange-500 text-white',
 };
 
 const priorityColors = {
@@ -136,11 +138,17 @@ export function ComplaintCard({ complaint, onStatusUpdate, isAdmin, showUserInfo
             <Button
               size="sm"
               variant="default"
-              className="bg-accent hover:bg-accent/90"
-              onClick={() => onStatusUpdate(complaint.id, 'resolved')}
+              className="bg-purple-600 hover:bg-purple-700"
+              onClick={() => onStatusUpdate(complaint.id, 'pending-verification')}
             >
-              Mark Resolved
+              Request Citizen Verification
             </Button>
+          </div>
+        )}
+
+        {isAdmin && complaint.status === 'pending-verification' && (
+          <div className="pt-2 border-t">
+            <p className="text-sm text-purple-600 font-medium">⏳ Awaiting citizen verification</p>
           </div>
         )}
       </CardContent>
