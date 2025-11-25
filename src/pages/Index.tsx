@@ -4,10 +4,12 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 const CityMap = lazy(() => import('@/components/CityMap').then((m) => ({ default: m.CityMap })));
 import { ComplaintCard } from '@/components/ComplaintCard';
 import { CreateComplaintDialog } from '@/components/CreateComplaintDialog';
-import { MapPin, LogOut, Plus, Shield, AlertCircle, User, Users } from 'lucide-react';
+import { CitizenVerificationView } from '@/components/CitizenVerificationView';
+import { MapPin, LogOut, Plus, Shield, AlertCircle, User, Users, CheckCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface Complaint {
@@ -200,32 +202,48 @@ const Index = () => {
 
           {/* Complaints Section */}
           <div className="space-y-6 order-1 lg:order-2">
-            <Card>
-              <CardHeader>
-                <CardTitle>Your Complaints</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {complaints.length === 0 ? (
-                  <div className="text-center py-12">
-                    <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold mb-2">No Complaints Yet</h3>
-                    <p className="text-muted-foreground mb-4">
-                      Start reporting civic issues in your area
-                    </p>
-                    <Button onClick={() => setShowDialog(true)}>
-                      <Plus className="h-4 w-4 mr-2" />
-                      Report an Issue
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {complaints.map((complaint) => (
-                      <ComplaintCard key={complaint.id} complaint={complaint} />
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+            <Tabs defaultValue="complaints" className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="complaints">My Complaints</TabsTrigger>
+                <TabsTrigger value="verifications">
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                  Verifications
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="complaints">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Your Complaints</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {complaints.length === 0 ? (
+                      <div className="text-center py-12">
+                        <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                        <h3 className="text-lg font-semibold mb-2">No Complaints Yet</h3>
+                        <p className="text-muted-foreground mb-4">
+                          Start reporting civic issues in your area
+                        </p>
+                        <Button onClick={() => setShowDialog(true)}>
+                          <Plus className="h-4 w-4 mr-2" />
+                          Report an Issue
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {complaints.map((complaint) => (
+                          <ComplaintCard key={complaint.id} complaint={complaint} />
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="verifications">
+                <CitizenVerificationView userId={user.id} />
+              </TabsContent>
+            </Tabs>
           </div>
         </div>
       </div>
