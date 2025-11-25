@@ -13,10 +13,12 @@ import {
   XCircle, 
   Clock, 
   AlertTriangle,
-  ChevronLeft 
+  ChevronLeft,
+  BarChart3
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { ComplaintCard } from '@/components/ComplaintCard';
+import { AdminAnalytics } from '@/components/AdminAnalytics';
 
 interface Complaint {
   id: string;
@@ -214,7 +216,12 @@ const Admin = () => {
                 <TabsTrigger value="all">All</TabsTrigger>
                 <TabsTrigger value="pending">Pending</TabsTrigger>
                 <TabsTrigger value="approved">Active</TabsTrigger>
+                <TabsTrigger value="verification">Awaiting Verification</TabsTrigger>
                 <TabsTrigger value="resolved">Resolved</TabsTrigger>
+                <TabsTrigger value="analytics">
+                  <BarChart3 className="h-4 w-4 mr-2" />
+                  Analytics
+                </TabsTrigger>
               </TabsList>
 
               <TabsContent value="all" className="space-y-4 mt-4">
@@ -265,6 +272,10 @@ const Admin = () => {
                       isAdmin
                     />
                   ))}
+              </TabsContent>
+
+              <TabsContent value="analytics" className="mt-4">
+                <AdminAnalytics complaints={complaints} />
               </TabsContent>
             </Tabs>
           </CardContent>
